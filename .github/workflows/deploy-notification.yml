@@ -13,12 +13,16 @@ jobs:
     
     steps:
       - name: Send deployment notification
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
         run: |
           echo "Deployment completed successfully!"
-          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
-          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
-          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          echo "Commit: $HEAD_SHA"
+          echo "Branch: $HEAD_BRANCH"
+          echo "Workflow: $WORKFLOW_NAME"
           # Add webhook notification here if needed
           # curl -X POST -H "Content-Type: application/json" \
-          #   -d '{"text":"Deployment successful for commit ${{ github.event.workflow_run.head_sha }}"}' \
+          #   -d '{"text":"Deployment successful for commit $HEAD_SHA"}' \
           #   ${{ secrets.WEBHOOK_URL }}
