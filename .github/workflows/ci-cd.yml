@@ -153,29 +153,24 @@ jobs:
       
       - name: Create .env file for CI
         run: |
-          cat > .env << EOF
-          # MongoDB Configuration
-          MONGO_ROOT_USER=admin
-          MONGO_ROOT_PASSWORD=admin123
-          MONGO_DATABASE=app-env-manager
-          MONGO_PORT=27017
+          # Copy the example file to maintain all variables
+          cp .env.example .env
           
-          # Backend Configuration
-          BACKEND_PORT=8080
-          MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin
-          MONGODB_DATABASE=app-env-manager
+          # Replace only the variables that need Docker-specific values
+          # Use sed with different delimiter to avoid issues with slashes in URLs
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS sed syntax
+            sed -i '' 's|MONGODB_URI=.*|MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin|' .env
+            sed -i '' 's|SSH_KEY_ENCRYPTION_KEY=.*|SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012|' .env
+          else
+            # Linux sed syntax
+            sed -i 's|MONGODB_URI=.*|MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin|' .env
+            sed -i 's|SSH_KEY_ENCRYPTION_KEY=.*|SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012|' .env
+          fi
           
-          # Security Configuration (32-byte key exactly)
-          JWT_SECRET=your-super-secret-jwt-key-change-this
-          SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012
-          
-          # Frontend Configuration
-          FRONTEND_PORT=80
-          ALLOWED_ORIGINS=http://localhost
-          
-          # Other settings
-          LOG_LEVEL=debug
-          EOF
+          echo "Updated .env file for CI:"
+          echo "========================"
+          grep -E "(MONGODB_URI|SSH_KEY_ENCRYPTION_KEY)" .env
       
       - name: Build Docker images
         run: docker compose build
