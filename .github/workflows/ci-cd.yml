@@ -30,8 +30,8 @@ jobs:
       options: --user root
     
     steps:
-      - name: Install git
-        run: apk add --no-cache git
+      - name: Install dependencies
+        run: apk add --no-cache git gcc musl-dev
       
       - name: Checkout code
         uses: actions/checkout@v4
@@ -46,12 +46,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       
-      - name: Install dependencies
+      - name: Download Go modules
         working-directory: ./backend
         run: go mod download
       
       - name: Run tests
         working-directory: ./backend
+        env:
+          CGO_ENABLED: 1
         run: go test -v -race -coverprofile=coverage.out ./...
       
       - name: Upload coverage
