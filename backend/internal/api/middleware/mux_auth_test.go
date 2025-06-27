@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"app-env-manager/internal/api/middleware"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
@@ -90,11 +90,11 @@ func TestMuxAuthMiddleware(t *testing.T) {
 			setupToken: func() string {
 				// Create a token with custom claims struct (not MapClaims)
 				type CustomClaims struct {
-					jwt.StandardClaims
+					jwt.RegisteredClaims
 				}
 				token := jwt.NewWithClaims(jwt.SigningMethodHS256, &CustomClaims{
-					StandardClaims: jwt.StandardClaims{
-						ExpiresAt: time.Now().Add(time.Hour).Unix(),
+					RegisteredClaims: jwt.RegisteredClaims{
+						ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 					},
 				})
 				tokenString, _ := token.SignedString([]byte(jwtSecret))

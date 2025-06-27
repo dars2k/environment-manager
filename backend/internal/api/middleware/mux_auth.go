@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,6 +31,10 @@ func MuxAuthMiddleware(jwtSecret string, logger *logrus.Logger) func(http.Handle
 
 			// Parse and validate token
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				// Verify the signing method is HMAC
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, jwt.ErrSignatureInvalid
+				}
 				return []byte(jwtSecret), nil
 			})
 
