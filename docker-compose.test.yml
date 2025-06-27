@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  # Test Environment Container
+  test-environment:
+    build:
+      context: ./docker/test-environment
+      dockerfile: Dockerfile
+    container_name: app-env-test-environment
+    hostname: test-environment
+    ports:
+      - "2222:22"     # SSH port
+      - "8888:8080"   # Health check server port
+    networks:
+      - app-network
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  app-network:
+    driver: bridge

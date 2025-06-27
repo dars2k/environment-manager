@@ -1,0 +1,56 @@
+# Application Environment Manager Configuration
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  read_timeout: 30s
+  write_timeout: 30s
+  shutdown_timeout: 10s
+
+database:
+  uri: mongodb://localhost:27017
+  name: app-env-manager
+  connection_timeout: 10s
+  max_pool_size: 100
+  min_pool_size: 10
+
+ssh:
+  connection_timeout: 30s
+  command_timeout: 5m
+  max_connections: 50
+  retry_attempts: 3
+  retry_delay: 5s
+
+health_check:
+  default_interval: 60s
+  default_timeout: 10s
+  worker_pool_size: 10
+  max_concurrent_checks: 20
+
+websocket:
+  ping_interval: 30s
+  pong_timeout: 60s
+  write_timeout: 10s
+  max_message_size: 4096
+
+security:
+  jwt_expiration: 24h
+  bcrypt_cost: 10
+  allowed_origins:
+    - http://localhost
+    - http://localhost:3000
+    - http://localhost:80
+
+logging:
+  level: info
+  format: json
+  output: stdout
+  file_path: /app/logs/app.log
+  max_size: 100 # MB
+  max_backups: 5
+  max_age: 30 # days
+
+audit:
+  retention_days: 90
+  batch_size: 100
+  flush_interval: 5s

@@ -1,0 +1,149 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+*.tmp
+*.temp
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing and coverage
+coverage/
+*.lcov
+.nyc_output
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+*.coverage
+*.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.coveragerc
+backend/coverage.out
+frontend/coverage/
+
+# Build artifacts and binaries
+dist/
+dist-ssr/
+build/
+out/
+*.local
+backend/server
+backend/bin/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Go specific
+# Binaries for programs and plugins
+*.exe~
+# Test binary, built with `go test -c`
+*.test
+# Output of the go coverage tool
+*.out
+# Dependency directories
+vendor/
+# Go workspace file
+go.work
+
+# Frontend specific
+# Production
+/build
+*.tsbuildinfo
+
+# Misc
+.eslintcache
+.env.production.local
+.env.development.local
+.env.test.local
+
+# History and backups
+.history/
+*.bak
+*.backup
+*.old
+
+# Debug
+debug/
+*.stackdump
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# macOS
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk

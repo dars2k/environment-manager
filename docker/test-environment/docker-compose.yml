@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  test-env-1:
+    build: .
+    container_name: test-environment-1
+    hostname: test-env-1
+    environment:
+      APP_VERSION: "1.0.0"
+    ports:
+      - "2221:22"
+      - "8001:8000"
+    networks:
+      - test-network
+    restart: unless-stopped
+
+  test-env-2:
+    build: .
+    container_name: test-environment-2
+    hostname: test-env-2
+    environment:
+      APP_VERSION: "2.0.0"
+    ports:
+      - "2222:22"
+      - "8002:8000"
+    networks:
+      - test-network
+    restart: unless-stopped
+
+networks:
+  test-network:
+    driver: bridge
