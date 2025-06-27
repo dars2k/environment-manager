@@ -11,7 +11,7 @@ The main pipeline that runs on commits to `master`/`main` branches and pull requ
 #### Optimizations Implemented:
 
 1. **Alpine-based containers**: Uses lightweight Alpine Linux containers for test jobs
-   - Backend tests run in `golang:1.21-alpine` 
+   - Backend tests run in `golang:1.23-alpine` 
    - Frontend tests run in `node:20-alpine`
    - Reduces overhead compared to full Ubuntu runners
 
@@ -78,7 +78,7 @@ If a workflow fails:
 
 ## Requirements
 
-- Go 1.21+
+- Go 1.23+
 - Node.js 20+
 - Docker and Docker Compose
 - GitHub repository with Actions enabled
