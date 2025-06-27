@@ -1,0 +1,24 @@
+name: Deployment Notification
+
+on:
+  workflow_run:
+    workflows: ["CI/CD Pipeline"]
+    types:
+      - completed
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' }}
+    
+    steps:
+      - name: Send deployment notification
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Commit: ${{ github.event.workflow_run.head_sha }}"
+          echo "Branch: ${{ github.event.workflow_run.head_branch }}"
+          echo "Workflow: ${{ github.event.workflow_run.name }}"
+          # Add webhook notification here if needed
+          # curl -X POST -H "Content-Type: application/json" \
+          #   -d '{"text":"Deployment successful for commit ${{ github.event.workflow_run.head_sha }}"}' \
+          #   ${{ secrets.WEBHOOK_URL }}

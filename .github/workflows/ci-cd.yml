@@ -1,0 +1,261 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  pull_request:
+    branches:
+      - master
+      - main
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: backend/go.sum
+      
+      - name: Download Go modules
+        working-directory: ./backend
+        run: go mod download
+      
+      - name: Run tests
+        working-directory: ./backend
+        run: go test -v -race -coverprofile=coverage.out ./...
+      
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: backend/coverage.out
+          retention-days: 1
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci --prefer-offline --no-audit
+      
+      - name: Run tests
+        working-directory: ./frontend
+        run: npm test -- --coverage
+      
+      - name: Upload coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+          retention-days: 1
+
+  build-and-push:
+    name: Build and Push Docker Images
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix={{branch}}-
+      
+      - name: Build and push Backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/backend:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
+            ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:${{ github.sha }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  integration-test:
+    name: Integration Tests
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Create .env file for CI
+        run: |
+          # Copy the example file to maintain all variables
+          cp .env.example .env
+          
+          # Replace only the variables that need Docker-specific values
+          # Use sed with different delimiter to avoid issues with slashes in URLs
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS sed syntax
+            sed -i '' 's|MONGODB_URI=.*|MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin|' .env
+            sed -i '' 's|SSH_KEY_ENCRYPTION_KEY=.*|SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012|' .env
+          else
+            # Linux sed syntax
+            sed -i 's|MONGODB_URI=.*|MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin|' .env
+            sed -i 's|SSH_KEY_ENCRYPTION_KEY=.*|SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012|' .env
+          fi
+          
+          echo "Updated .env file for CI:"
+          echo "========================"
+          grep -E "(MONGODB_URI|SSH_KEY_ENCRYPTION_KEY)" .env
+      
+      - name: Build Docker images
+        run: docker compose build
+      
+      - name: Start services
+        run: |
+          docker compose up -d
+          echo "Waiting for services to be ready..."
+          
+          # Wait for MongoDB to be healthy
+          timeout 60 bash -c 'until docker compose ps | grep -q "app-env-manager-db.*healthy"; do sleep 2; done'
+          echo "MongoDB is healthy"
+          
+          # Wait for backend to be ready with retries
+          echo "Waiting for backend..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/api/v1/health 2>/dev/null; then
+              echo "Backend is healthy"
+              break
+            fi
+            echo "Backend not ready yet, attempt $i/30"
+            if [ $i -eq 15 ]; then
+              echo "Backend logs after 15 attempts:"
+              docker compose logs backend
+            fi
+            sleep 2
+          done
+          
+          # Final health check
+          echo "Final health checks..."
+          curl -f http://localhost:8080/api/v1/health || (echo "Backend health check failed"; docker compose logs backend; exit 1)
+          curl -f http://localhost/health || (echo "Frontend health check failed"; docker compose logs frontend; exit 1)
+      
+      - name: Run integration tests
+        run: |
+          # Add integration tests here if available
+          echo "Integration tests placeholder"
+      
+      - name: Print logs on failure
+        if: failure()
+        run: |
+          docker compose logs
+      
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
+
+  release:
+    name: Create Release
+    needs: [build-and-push, integration-test]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get version
+        id: version
+        run: |
+          # Extract version from the last tag or use commit short SHA
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          NEW_VERSION=$(echo $VERSION | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "New version: $NEW_VERSION"
+      
+      - name: Generate changelog
+        id: changelog
+        run: |
+          echo "# Changelog" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "## What's Changed" >> CHANGELOG.md
+          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)..HEAD >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+          generate_release_notes: true

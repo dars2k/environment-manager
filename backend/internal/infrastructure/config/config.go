@@ -152,8 +152,9 @@ func (c *Config) applyEnvOverrides() {
 		c.Server.Host = host
 	}
 	if port := os.Getenv("SERVER_PORT"); port != "" {
-		if p, err := time.ParseDuration(port); err == nil {
-			c.Server.Port = int(p)
+		var p int
+		if _, err := fmt.Sscanf(port, "%d", &p); err == nil {
+			c.Server.Port = p
 		}
 	}
 
