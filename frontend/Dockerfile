@@ -7,8 +7,13 @@ WORKDIR /app
 # Copy package files
 COPY package.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies with clean state and proper esbuild
+RUN apk add --no-cache python3 make g++ && \
+    rm -rf node_modules package-lock.json ~/.npm && \
+    npm cache clean --force && \
+    npm install && \
+    npm uninstall esbuild && \
+    npm install esbuild@0.21.5
 
 # Copy source code
 COPY . .
