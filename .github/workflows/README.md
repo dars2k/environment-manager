@@ -10,10 +10,10 @@ The main pipeline that runs on commits to `master`/`main` branches and pull requ
 
 #### Optimizations Implemented:
 
-1. **Alpine-based containers**: Uses lightweight Alpine Linux containers for test jobs
-   - Backend tests run in `golang:1.23-alpine` 
-   - Frontend tests run in `node:20-alpine`
-   - Reduces overhead compared to full Ubuntu runners
+1. **Efficient test setup**: Uses GitHub's official setup actions for optimal performance
+   - Backend uses `actions/setup-go@v5` with built-in caching
+   - Frontend uses `actions/setup-node@v4` with built-in caching
+   - These actions are optimized for GitHub's infrastructure
 
 2. **Caching strategies**:
    - Go modules and build cache for backend
@@ -47,20 +47,21 @@ Sends notifications when the CI/CD pipeline completes successfully on the master
 
 ## Best Practices
 
-1. **Container-based testing**: Running tests in containers ensures consistency and reduces setup time
+1. **Official GitHub Actions**: Uses GitHub's official setup actions for languages (Go, Node.js)
 2. **Parallel execution**: Backend and frontend tests run in parallel
-3. **Docker buildx**: Uses buildx for advanced caching and multi-platform builds
-4. **GitHub Container Registry**: Uses ghcr.io for free image hosting with the repository
-5. **Automated versioning**: Increments version numbers automatically
-6. **Security**: Uses GITHUB_TOKEN for authentication (no separate secrets needed)
+3. **Docker Compose v2**: Uses modern `docker compose` syntax (not legacy `docker-compose`)
+4. **Docker buildx**: Uses buildx for advanced caching and multi-platform builds
+5. **GitHub Container Registry**: Uses ghcr.io for free image hosting with the repository
+6. **Automated versioning**: Increments version numbers automatically
+7. **Security**: Uses GITHUB_TOKEN for authentication (no separate secrets needed)
 
 ## Performance Comparison
 
 | Approach | Estimated Time | Resources |
 |----------|---------------|-----------|
-| Ubuntu runners (default) | ~5-7 minutes | Standard VMs |
-| Alpine containers | ~3-5 minutes | Lightweight containers |
-| With caching | ~2-3 minutes | Cached dependencies |
+| Basic setup | ~5-7 minutes | No caching |
+| With official actions | ~3-5 minutes | Optimized setup |
+| With full caching | ~2-3 minutes | Cached dependencies |
 
 ## Future Optimizations
 
