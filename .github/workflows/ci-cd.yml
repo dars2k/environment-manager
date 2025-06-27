@@ -160,14 +160,31 @@ jobs:
       - name: Start services
         run: |
           docker compose up -d
-          sleep 30  # Wait for services to be ready
-      
-      - name: Check service health
-        run: |
-          echo "Checking backend health..."
-          curl -f http://localhost:8080/api/v1/health || exit 1
-          echo "Checking frontend health..."
-          curl -f http://localhost/health || exit 1
+          echo "Waiting for services to be ready..."
+          
+          # Wait for MongoDB to be healthy
+          timeout 60 bash -c 'until docker compose ps | grep -q "app-env-manager-db.*healthy"; do sleep 2; done'
+          echo "MongoDB is healthy"
+          
+          # Wait for backend to be ready with retries
+          echo "Waiting for backend..."
+          for i in {1..30}; do
+            if curl -f http://localhost:8080/api/v1/health 2>/dev/null; then
+              echo "Backend is healthy"
+              break
+            fi
+            echo "Backend not ready yet, attempt $i/30"
+            if [ $i -eq 15 ]; then
+              echo "Backend logs after 15 attempts:"
+              docker compose logs backend
+            fi
+            sleep 2
+          done
+          
+          # Final health check
+          echo "Final health checks..."
+          curl -f http://localhost:8080/api/v1/health || (echo "Backend health check failed"; docker compose logs backend; exit 1)
+          curl -f http://localhost/health || (echo "Frontend health check failed"; docker compose logs frontend; exit 1)
       
       - name: Run integration tests
         run: |
