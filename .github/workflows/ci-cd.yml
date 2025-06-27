@@ -151,8 +151,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Create .env file
-        run: cp .env.example .env
+      - name: Create .env file for CI
+        run: |
+          cat > .env << EOF
+          # MongoDB Configuration
+          MONGO_ROOT_USER=admin
+          MONGO_ROOT_PASSWORD=admin123
+          MONGO_DATABASE=app-env-manager
+          MONGO_PORT=27017
+          
+          # Backend Configuration
+          BACKEND_PORT=8080
+          MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin
+          MONGODB_DATABASE=app-env-manager
+          
+          # Security Configuration (32-byte key exactly)
+          JWT_SECRET=your-super-secret-jwt-key-change-this
+          SSH_KEY_ENCRYPTION_KEY=12345678901234567890123456789012
+          
+          # Frontend Configuration
+          FRONTEND_PORT=80
+          ALLOWED_ORIGINS=http://localhost
+          
+          # Other settings
+          LOG_LEVEL=debug
+          EOF
       
       - name: Build Docker images
         run: docker compose build
