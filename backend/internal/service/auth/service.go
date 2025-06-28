@@ -8,7 +8,7 @@ import (
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"app-env-manager/internal/service/log"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // Service handles authentication business logic
@@ -24,7 +24,7 @@ type Claims struct {
 	UserID   string             `json:"userId"`
 	Username string             `json:"username"`
 	Role     entities.UserRole  `json:"role"`
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 }
 
 // NewService creates a new auth service
@@ -68,9 +68,10 @@ func (s *Service) Login(ctx context.Context, req entities.LoginRequest) (*entiti
 		UserID:   user.ID.Hex(),
 		Username: user.Username,
 		Role:     user.Role,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: expiresAt.Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			Issuer:    "app-env-manager",
 		},
 	}
 

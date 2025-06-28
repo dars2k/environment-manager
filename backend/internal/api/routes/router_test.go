@@ -12,7 +12,7 @@ import (
 	"app-env-manager/internal/api/handlers"
 	"app-env-manager/internal/api/routes"
 	"app-env-manager/internal/websocket/hub"
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"

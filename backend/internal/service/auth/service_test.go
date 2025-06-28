@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
@@ -264,9 +264,9 @@ func (suite *AuthServiceTestSuite) TestValidateToken_Valid() {
 		UserID:   "123",
 		Username: "testuser",
 		Role:     entities.UserRoleAdmin,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -290,9 +290,9 @@ func (suite *AuthServiceTestSuite) TestValidateToken_Expired() {
 		UserID:   "123",
 		Username: "testuser",
 		Role:     entities.UserRoleAdmin,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(-time.Hour).Unix(), // Expired 1 hour ago
-			IssuedAt:  time.Now().Add(-2 * time.Hour).Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Hour)), // Expired 1 hour ago
+			IssuedAt:  jwt.NewNumericDate(time.Now().Add(-2 * time.Hour)),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -313,9 +313,9 @@ func (suite *AuthServiceTestSuite) TestValidateToken_InvalidSignature() {
 		UserID:   "123",
 		Username: "testuser",
 		Role:     entities.UserRoleAdmin,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -458,8 +458,8 @@ func (suite *AuthServiceTestSuite) TestValidateToken_InvalidSigningMethod() {
 	// Arrange
 	// Create a token with RS256 instead of HS256
 	token := jwt.New(jwt.SigningMethodRS256)
-	token.Claims = jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(time.Hour).Unix(),
+	token.Claims = jwt.RegisteredClaims{
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 	}
 	
 	// Generate a fake RSA private key just for signing
