@@ -14,6 +14,19 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// sanitizeString removes special characters that could be used for NoSQL injection
+func sanitizeString(input string) string {
+	// Allow only alphanumeric characters and basic punctuation
+	safeChars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ "
+	var sanitized bytes.Buffer
+	for _, char := range input {
+		if strings.ContainsRune(safeChars, char) {
+			sanitized.WriteRune(char)
+		}
+	}
+	return sanitized.String()
+}
+
 // EnvironmentRepository implements the environment repository interface for MongoDB
 type EnvironmentRepository struct {
 	collection *mongo.Collection
@@ -26,7 +39,7 @@ func NewEnvironmentRepository(db *mongo.Database) *EnvironmentRepository {
 	}
 }
 
-// validateStringInput ensures the input is a valid string and not a potential injection attempt
+// validateStringInput ensures the input is a valid string and sanitizes it to prevent NoSQL injection
 func validateStringInput(input interface{}) (string, error) {
 	// Ensure input is a string type
 	str, ok := input.(string)
@@ -39,7 +52,10 @@ func validateStringInput(input interface{}) (string, error) {
 		return "", fmt.Errorf("input cannot be empty")
 	}
 	
-	return str, nil
+	// Sanitize input by removing special characters that could be used for NoSQL injection
+	sanitizedStr := sanitizeString(str)
+	
+	return sanitizedStr, nil
 }
 
 // Create creates a new environment
@@ -80,7 +96,7 @@ func (r *EnvironmentRepository) GetByID(ctx context.Context, id string) (*entiti
 
 // GetByName retrieves an environment by name
 func (r *EnvironmentRepository) GetByName(ctx context.Context, name string) (*entities.Environment, error) {
-	// Validate name to prevent NoSQL injection
+	// Validate and sanitize name to prevent NoSQL injection
 	validatedName, err := validateStringInput(name)
 	if err != nil {
 		return nil, errors.NewValidationError("name", "invalid environment name")
