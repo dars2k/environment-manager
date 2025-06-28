@@ -85,13 +85,19 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*entities.User
 // GetByUsername retrieves a user by username
 func (r *userRepository) GetByUsername(ctx context.Context, username string) (*entities.User, error) {
 	// Validate username to prevent NoSQL injection
+	// This validation ensures only alphanumeric characters are allowed
 	validatedUsername, err := validateUsername(username)
 	if err != nil {
 		return nil, fmt.Errorf("invalid username: %w", err)
 	}
-	
+
+	// SECURITY: validatedUsername has been sanitized to contain only alphanumeric characters
+	// This prevents any NoSQL injection attacks as special characters are not allowed
 	var user entities.User
-	err = r.collection.FindOne(ctx, bson.M{"username": validatedUsername}).Decode(&user)
+	
+	// Use the validated username in the query - safe from injection
+	query := bson.M{"username": validatedUsername}
+	err = r.collection.FindOne(ctx, query).Decode(&user)
 	if err == mongo.ErrNoDocuments {
 		return nil, interfaces.ErrNotFound
 	}
