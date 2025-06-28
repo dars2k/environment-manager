@@ -8,6 +8,7 @@ import (
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"go.mongodb.org/mongo-driver/bson"
+	"regexp"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -36,7 +37,7 @@ func NewUserRepository(db *mongo.Database) interfaces.UserRepository {
 	}
 }
 
-// validateUsername ensures the username is a valid string and not a potential injection attempt
+// validateUsername ensures the username is a valid string and sanitizes it to prevent NoSQL injection
 func validateUsername(username interface{}) (string, error) {
 	// Ensure username is a string type
 	str, ok := username.(string)
@@ -47,6 +48,12 @@ func validateUsername(username interface{}) (string, error) {
 	// Additional validation: ensure it's not empty
 	if str == "" {
 		return "", fmt.Errorf("username cannot be empty")
+	}
+	
+	// Sanitize username to allow only alphanumeric characters
+	re := regexp.MustCompile(`^[a-zA-Z0-9]+$`)
+	if !re.MatchString(str) {
+		return "", fmt.Errorf("username contains invalid characters")
 	}
 	
 	return str, nil
