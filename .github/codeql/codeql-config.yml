@@ -1,0 +1,20 @@
+name: "Security and Quality"
+
+# Specify the CodeQL query packs to run
+queries:
+  - uses: security-and-quality
+
+# Define query filters to exclude certain results
+query-filters:
+  - exclude:
+      # Exclude specific queries if needed
+      id: 
+        # Add query IDs here if we need to exclude specific false positives
+        # For example: - go/sql-injection
+
+# Path filters to exclude certain files/directories
+paths-ignore:
+  - '**/test/**'
+  - '**/*_test.go'
+  - '**/vendor/**'
+  - '**/node_modules/**'
