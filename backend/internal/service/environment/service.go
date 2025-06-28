@@ -683,9 +683,26 @@ func (s *Service) GetAvailableVersions(ctx context.Context, id string) ([]string
 		return nil, "", fmt.Errorf("version list URL is not configured")
 	}
 
+	// Validate the URL to prevent SSRF attacks
+	if err := validateURL(env.UpgradeConfig.VersionListURL); err != nil {
+		return nil, "", fmt.Errorf("invalid version list URL: %w", err)
+	}
+
 	// Fetch versions from endpoint
 	client := &http.Client{
 		Timeout: 10 * time.Second,
+		// Prevent following redirects to internal URLs
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Validate each redirect URL
+			if err := validateURL(req.URL.String()); err != nil {
+				return fmt.Errorf("redirect to invalid URL: %w", err)
+			}
+			// Limit redirect chain
+			if len(via) >= 10 {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
+		},
 	}
 
 	// Determine method (default to GET if not specified)
