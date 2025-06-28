@@ -49,12 +49,6 @@ func main() {
 	}
 	defer mongoDB.Close(context.Background())
 
-	// Run email field migration
-	logger.Info("Running email field migration...")
-	if err := database.MigrateRemoveEmailField(mongoDB.Database()); err != nil {
-		logger.WithError(err).Error("Failed to run email field migration")
-	}
-
 	// Create indexes
 	if err := mongoDB.CreateIndexes(context.Background()); err != nil {
 		logger.WithError(err).Error("Failed to create indexes")
