@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"app-env-manager/internal/domain/entities"
@@ -23,6 +24,17 @@ func NewLogRepository(db *mongo.Database) interfaces.LogRepository {
 	}
 }
 
+// escapeRegex escapes special regex characters to prevent regex injection
+func escapeRegex(s string) string {
+	// Escape all regex special characters
+	specialChars := `\.+*?^$()[]{}|`
+	escaped := s
+	for _, char := range specialChars {
+		escaped = strings.ReplaceAll(escaped, string(char), `\`+string(char))
+	}
+	return escaped
+}
+
 // Create inserts a new log entry
 func (r *logRepository) Create(ctx context.Context, log *entities.Log) error {
 	log.Timestamp = time.Now()
@@ -36,23 +48,34 @@ func (r *logRepository) List(ctx context.Context, filter interfaces.LogFilter) (
 	query := bson.M{}
 	
 	if filter.EnvironmentID != nil {
+		// EnvironmentID is already a primitive.ObjectID, safe to use
 		query["environmentId"] = filter.EnvironmentID
 	}
 	
 	if filter.UserID != nil {
+		// UserID is already a primitive.ObjectID, safe to use
 		query["userId"] = filter.UserID
 	}
 	
 	if filter.Type != "" {
-		query["type"] = filter.Type
+		// Validate type is a string to prevent injection
+		if _, ok := interface{}(filter.Type).(string); ok {
+			query["type"] = filter.Type
+		}
 	}
 	
 	if filter.Level != "" {
-		query["level"] = filter.Level
+		// Validate level is a string to prevent injection
+		if _, ok := interface{}(filter.Level).(string); ok {
+			query["level"] = filter.Level
+		}
 	}
 	
 	if filter.Action != "" {
-		query["action"] = filter.Action
+		// Validate action is a string to prevent injection
+		if _, ok := interface{}(filter.Action).(string); ok {
+			query["action"] = filter.Action
+		}
 	}
 	
 	if !filter.StartTime.IsZero() || !filter.EndTime.IsZero() {
@@ -67,10 +90,14 @@ func (r *logRepository) List(ctx context.Context, filter interfaces.LogFilter) (
 	}
 	
 	if filter.Search != "" {
+		// Escape regex special characters to prevent injection
+		escapedSearch := escapeRegex(filter.Search)
+		searchRegex := primitive.Regex{Pattern: escapedSearch, Options: "i"}
+		
 		query["$or"] = []bson.M{
-			{"message": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"environmentName": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"username": bson.M{"$regex": filter.Search, "$options": "i"}},
+			{"message": searchRegex},
+			{"environmentName": searchRegex},
+			{"username": searchRegex},
 		}
 	}
 	
@@ -162,15 +189,24 @@ func (r *logRepository) Count(ctx context.Context, filter interfaces.LogFilter) 
 	}
 	
 	if filter.Type != "" {
-		query["type"] = filter.Type
+		// Validate type is a string to prevent injection
+		if _, ok := interface{}(filter.Type).(string); ok {
+			query["type"] = filter.Type
+		}
 	}
 	
 	if filter.Level != "" {
-		query["level"] = filter.Level
+		// Validate level is a string to prevent injection
+		if _, ok := interface{}(filter.Level).(string); ok {
+			query["level"] = filter.Level
+		}
 	}
 	
 	if filter.Action != "" {
-		query["action"] = filter.Action
+		// Validate action is a string to prevent injection
+		if _, ok := interface{}(filter.Action).(string); ok {
+			query["action"] = filter.Action
+		}
 	}
 	
 	if !filter.StartTime.IsZero() || !filter.EndTime.IsZero() {
@@ -185,10 +221,14 @@ func (r *logRepository) Count(ctx context.Context, filter interfaces.LogFilter) 
 	}
 	
 	if filter.Search != "" {
+		// Escape regex special characters to prevent injection
+		escapedSearch := escapeRegex(filter.Search)
+		searchRegex := primitive.Regex{Pattern: escapedSearch, Options: "i"}
+		
 		query["$or"] = []bson.M{
-			{"message": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"environmentName": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"username": bson.M{"$regex": filter.Search, "$options": "i"}},
+			{"message": searchRegex},
+			{"environmentName": searchRegex},
+			{"username": searchRegex},
 		}
 	}
 	

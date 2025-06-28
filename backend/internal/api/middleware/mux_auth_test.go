@@ -108,7 +108,6 @@ func TestMuxAuthMiddleware(t *testing.T) {
 			setupToken: func() string {
 				token, _ := createTestToken(jwt.MapClaims{
 					"username": "testuser",
-					"email":    "test@example.com",
 					"exp":      time.Now().Add(time.Hour).Unix(),
 				}, jwtSecret)
 				return "Bearer " + token
@@ -135,7 +134,6 @@ func TestMuxAuthMiddleware(t *testing.T) {
 				token, _ := createTestToken(jwt.MapClaims{
 					"userId":   "user-123",
 					"username": "testuser",
-					"email":    "test@example.com",
 					"role":     "admin",
 					"exp":      time.Now().Add(time.Hour).Unix(),
 					"iat":      time.Now().Unix(),

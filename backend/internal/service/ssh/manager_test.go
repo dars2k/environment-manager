@@ -22,6 +22,7 @@ import (
 type mockSSHServer struct {
 	listener net.Listener
 	config   *gossh.ServerConfig
+	hostKey  gossh.Signer
 	handler  func(conn net.Conn, config *gossh.ServerConfig)
 	stopped  chan struct{}
 }
@@ -56,6 +57,7 @@ func newMockSSHServer(t *testing.T) *mockSSHServer {
 	server := &mockSSHServer{
 		listener: listener,
 		config:   config,
+		hostKey:  signer,
 		stopped:  make(chan struct{}),
 	}
 
@@ -231,6 +233,10 @@ func TestManager_Execute_Success(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -245,6 +251,7 @@ func TestManager_Execute_Success(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	result, err := manager.Execute(ctx, target, "echo test")
@@ -259,6 +266,10 @@ func TestManager_Execute_WithExitCode(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -273,6 +284,7 @@ func TestManager_Execute_WithExitCode(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	result, err := manager.Execute(ctx, target, "exit 1")
@@ -313,6 +325,10 @@ func TestManager_Execute_PrivateKey(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -327,6 +343,7 @@ func TestManager_Execute_PrivateKey(t *testing.T) {
 		Port:       server.port(),
 		Username:   "keyuser",
 		PrivateKey: generateTestPrivateKey(t),
+		HostKey:    hostKeyBytes,
 	}
 
 	result, err := manager.Execute(ctx, target, "echo test")
@@ -392,6 +409,10 @@ func TestManager_Execute_ContextCancellation(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -406,6 +427,7 @@ func TestManager_Execute_ContextCancellation(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	// Cancel context immediately
@@ -421,6 +443,10 @@ func TestManager_Execute_CommandTimeout(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    500 * time.Millisecond, // Short timeout
@@ -435,6 +461,7 @@ func TestManager_Execute_CommandTimeout(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	result, err := manager.Execute(ctx, target, "sleep 2")
@@ -446,6 +473,10 @@ func TestManager_Execute_CommandTimeout(t *testing.T) {
 func TestManager_Execute_ConnectionReuse(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
+
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
 
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
@@ -461,6 +492,7 @@ func TestManager_Execute_ConnectionReuse(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	// Execute multiple commands to test connection reuse
@@ -476,6 +508,10 @@ func TestManager_Execute_ConnectionReuse(t *testing.T) {
 func TestManager_Execute_MaxConnections(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
+
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
 
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
@@ -493,6 +529,7 @@ func TestManager_Execute_MaxConnections(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 	
 	target2 := ssh.Target{
@@ -500,6 +537,7 @@ func TestManager_Execute_MaxConnections(t *testing.T) {
 		Port:     server.port(),
 		Username: "keyuser", // Different user to force new connection
 		PrivateKey: generateTestPrivateKey(t),
+		HostKey:  hostKeyBytes,
 	}
 
 	// Execute on first target
@@ -518,6 +556,10 @@ func TestManager_TestConnection_Success(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -532,6 +574,7 @@ func TestManager_TestConnection_Success(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	err := manager.TestConnection(ctx, target)
@@ -584,6 +627,10 @@ func TestManager_Close(t *testing.T) {
 	server := newMockSSHServer(t)
 	defer server.stop()
 
+	// Get the host key from the server
+	hostKey := server.hostKey.PublicKey()
+	hostKeyBytes := gossh.MarshalAuthorizedKey(hostKey)
+
 	config := ssh.Config{
 		ConnectionTimeout: 5 * time.Second,
 		CommandTimeout:    10 * time.Second,
@@ -597,6 +644,7 @@ func TestManager_Close(t *testing.T) {
 		Port:     server.port(),
 		Username: "testuser",
 		Password: "testpass",
+		HostKey:  hostKeyBytes,
 	}
 
 	// Execute a command to create a connection
