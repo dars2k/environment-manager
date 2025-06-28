@@ -15,7 +15,7 @@ import (
 )
 
 func TestBuildRequest_VariousScenarios(t *testing.T) {
-	checker := health.NewChecker(5 * time.Second)
+	checker := health.NewCheckerForTesting(5 * time.Second)
 	ctx := context.Background()
 
 	tests := []struct {
@@ -383,7 +383,7 @@ func TestCheckHealth_EdgeCases(t *testing.T) {
 			server := tt.setupServer()
 			defer server.Close()
 
-			checker := health.NewChecker(5 * time.Second)
+			checker := health.NewCheckerForTesting(5 * time.Second)
 			tt.env.HealthCheck.Endpoint = server.URL
 
 			ctx := context.Background()
