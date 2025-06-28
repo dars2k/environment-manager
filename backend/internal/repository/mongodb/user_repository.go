@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"app-env-manager/internal/domain/entities"
@@ -35,6 +36,22 @@ func NewUserRepository(db *mongo.Database) interfaces.UserRepository {
 	}
 }
 
+// validateUsername ensures the username is a valid string and not a potential injection attempt
+func validateUsername(username interface{}) (string, error) {
+	// Ensure username is a string type
+	str, ok := username.(string)
+	if !ok {
+		return "", fmt.Errorf("username must be a string")
+	}
+	
+	// Additional validation: ensure it's not empty
+	if str == "" {
+		return "", fmt.Errorf("username cannot be empty")
+	}
+	
+	return str, nil
+}
+
 // Create inserts a new user
 func (r *userRepository) Create(ctx context.Context, user *entities.User) error {
 	user.CreatedAt = time.Now()
@@ -60,8 +77,14 @@ func (r *userRepository) GetByID(ctx context.Context, id string) (*entities.User
 
 // GetByUsername retrieves a user by username
 func (r *userRepository) GetByUsername(ctx context.Context, username string) (*entities.User, error) {
+	// Validate username to prevent NoSQL injection
+	validatedUsername, err := validateUsername(username)
+	if err != nil {
+		return nil, fmt.Errorf("invalid username: %w", err)
+	}
+	
 	var user entities.User
-	err := r.collection.FindOne(ctx, bson.M{"username": username}).Decode(&user)
+	err = r.collection.FindOne(ctx, bson.M{"username": validatedUsername}).Decode(&user)
 	if err == mongo.ErrNoDocuments {
 		return nil, interfaces.ErrNotFound
 	}

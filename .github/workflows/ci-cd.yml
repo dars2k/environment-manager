@@ -25,6 +25,8 @@ jobs:
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -54,6 +56,8 @@ jobs:
   test-frontend:
     name: Test Frontend
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code
@@ -146,6 +150,8 @@ jobs:
     name: Integration Tests
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     steps:
       - name: Checkout code

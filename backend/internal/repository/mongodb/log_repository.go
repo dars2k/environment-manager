@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"app-env-manager/internal/domain/entities"
@@ -21,6 +22,17 @@ func NewLogRepository(db *mongo.Database) interfaces.LogRepository {
 	return &logRepository{
 		collection: db.Collection("logs"),
 	}
+}
+
+// escapeRegex escapes special regex characters to prevent regex injection
+func escapeRegex(s string) string {
+	// Escape all regex special characters
+	specialChars := `\.+*?^$()[]{}|`
+	escaped := s
+	for _, char := range specialChars {
+		escaped = strings.ReplaceAll(escaped, string(char), `\`+string(char))
+	}
+	return escaped
 }
 
 // Create inserts a new log entry
@@ -67,10 +79,14 @@ func (r *logRepository) List(ctx context.Context, filter interfaces.LogFilter) (
 	}
 	
 	if filter.Search != "" {
+		// Escape regex special characters to prevent injection
+		escapedSearch := escapeRegex(filter.Search)
+		searchRegex := primitive.Regex{Pattern: escapedSearch, Options: "i"}
+		
 		query["$or"] = []bson.M{
-			{"message": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"environmentName": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"username": bson.M{"$regex": filter.Search, "$options": "i"}},
+			{"message": searchRegex},
+			{"environmentName": searchRegex},
+			{"username": searchRegex},
 		}
 	}
 	
@@ -185,10 +201,14 @@ func (r *logRepository) Count(ctx context.Context, filter interfaces.LogFilter) 
 	}
 	
 	if filter.Search != "" {
+		// Escape regex special characters to prevent injection
+		escapedSearch := escapeRegex(filter.Search)
+		searchRegex := primitive.Regex{Pattern: escapedSearch, Options: "i"}
+		
 		query["$or"] = []bson.M{
-			{"message": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"environmentName": bson.M{"$regex": filter.Search, "$options": "i"}},
-			{"username": bson.M{"$regex": filter.Search, "$options": "i"}},
+			{"message": searchRegex},
+			{"environmentName": searchRegex},
+			{"username": searchRegex},
 		}
 	}
 	

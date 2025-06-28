@@ -26,6 +26,22 @@ func NewEnvironmentRepository(db *mongo.Database) *EnvironmentRepository {
 	}
 }
 
+// validateStringInput ensures the input is a valid string and not a potential injection attempt
+func validateStringInput(input interface{}) (string, error) {
+	// Ensure input is a string type
+	str, ok := input.(string)
+	if !ok {
+		return "", fmt.Errorf("input must be a string")
+	}
+	
+	// Additional validation: ensure it's not empty
+	if str == "" {
+		return "", fmt.Errorf("input cannot be empty")
+	}
+	
+	return str, nil
+}
+
 // Create creates a new environment
 func (r *EnvironmentRepository) Create(ctx context.Context, env *entities.Environment) error {
 	env.Timestamps.CreatedAt = time.Now()
@@ -64,8 +80,14 @@ func (r *EnvironmentRepository) GetByID(ctx context.Context, id string) (*entiti
 
 // GetByName retrieves an environment by name
 func (r *EnvironmentRepository) GetByName(ctx context.Context, name string) (*entities.Environment, error) {
+	// Validate name to prevent NoSQL injection
+	validatedName, err := validateStringInput(name)
+	if err != nil {
+		return nil, errors.NewValidationError("name", "invalid environment name")
+	}
+	
 	var env entities.Environment
-	err := r.collection.FindOne(ctx, bson.M{"name": name}).Decode(&env)
+	err = r.collection.FindOne(ctx, bson.M{"name": validatedName}).Decode(&env)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, errors.ErrEnvironmentNotFound
@@ -82,7 +104,13 @@ func (r *EnvironmentRepository) List(ctx context.Context, filter interfaces.List
 	
 	// Apply status filter if provided
 	if filter.Status != nil {
-		query["status.health"] = *filter.Status
+		// Convert HealthStatus to string and validate to prevent NoSQL injection
+		statusStr := string(*filter.Status)
+		validatedStatus, err := validateStringInput(statusStr)
+		if err != nil {
+			return nil, errors.NewValidationError("status", "invalid status filter")
+		}
+		query["status.health"] = validatedStatus
 	}
 	
 	// Set up find options
@@ -204,7 +232,13 @@ func (r *EnvironmentRepository) Count(ctx context.Context, filter interfaces.Lis
 	
 	// Apply status filter if provided
 	if filter.Status != nil {
-		query["status.health"] = *filter.Status
+		// Convert HealthStatus to string and validate to prevent NoSQL injection
+		statusStr := string(*filter.Status)
+		validatedStatus, err := validateStringInput(statusStr)
+		if err != nil {
+			return 0, errors.NewValidationError("status", "invalid status filter")
+		}
+		query["status.health"] = validatedStatus
 	}
 	
 	count, err := r.collection.CountDocuments(ctx, query)

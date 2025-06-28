@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -893,15 +895,103 @@ func getJSONPath(data map[string]interface{}, path string) (interface{}, bool) {
 	return current, true
 }
 
+// validateURL validates a URL to prevent SSRF attacks
+func validateURL(rawURL string) error {
+	// Parse the URL
+	parsedURL, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Check scheme - only allow HTTP and HTTPS
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return fmt.Errorf("only HTTP and HTTPS schemes are allowed")
+	}
+
+	// Extract hostname
+	hostname := parsedURL.Hostname()
+	if hostname == "" {
+		return fmt.Errorf("hostname is required")
+	}
+
+	// Check for local/private addresses
+	// Resolve the hostname to IP addresses
+	ips, err := net.LookupIP(hostname)
+	if err != nil {
+		// If we can't resolve, it might be a non-existent host
+		return fmt.Errorf("failed to resolve hostname: %w", err)
+	}
+
+	for _, ip := range ips {
+		// Check for localhost
+		if ip.IsLoopback() {
+			return fmt.Errorf("localhost addresses are not allowed")
+		}
+
+		// Check for private networks
+		if ip.IsPrivate() {
+			return fmt.Errorf("private network addresses are not allowed")
+		}
+
+		// Check for link-local addresses
+		if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return fmt.Errorf("link-local addresses are not allowed")
+		}
+
+		// Check for multicast
+		if ip.IsMulticast() {
+			return fmt.Errorf("multicast addresses are not allowed")
+		}
+
+		// Check for unspecified addresses (0.0.0.0 or ::)
+		if ip.IsUnspecified() {
+			return fmt.Errorf("unspecified addresses are not allowed")
+		}
+	}
+
+	// Additional checks for common internal hostnames
+	lowerHostname := strings.ToLower(hostname)
+	blockedHostnames := []string{
+		"localhost", "127.0.0.1", "0.0.0.0", "::1",
+		"metadata", "metadata.google.internal", // GCP metadata
+		"169.254.169.254", // AWS/Azure metadata
+	}
+
+	for _, blocked := range blockedHostnames {
+		if lowerHostname == blocked {
+			return fmt.Errorf("hostname '%s' is not allowed", hostname)
+		}
+	}
+
+	return nil
+}
+
 // executeHTTPCommand executes an HTTP command
 func (s *Service) executeHTTPCommand(ctx context.Context, cmd entities.CommandDetails) (string, bool) {
 	if cmd.URL == "" {
 		return "HTTP command URL is required", false
 	}
 
+	// Validate URL to prevent SSRF
+	if err := validateURL(cmd.URL); err != nil {
+		return fmt.Sprintf("URL validation failed: %v", err), false
+	}
+
 	// Create HTTP client with timeout
 	client := &http.Client{
 		Timeout: 30 * time.Second,
+		// Disable following redirects to prevent redirect-based SSRF
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			// Validate each redirect URL
+			if err := validateURL(req.URL.String()); err != nil {
+				return fmt.Errorf("redirect URL validation failed: %w", err)
+			}
+			// Limit redirect chain
+			if len(via) >= 5 {
+				return fmt.Errorf("too many redirects")
+			}
+			return nil
+		},
 	}
 
 	// Build request
