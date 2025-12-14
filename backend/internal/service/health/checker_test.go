@@ -32,7 +32,7 @@ func TestChecker_CheckHealth_HTTPSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := health.NewChecker(5 * time.Second)
+	checker := health.NewCheckerForTesting(5 * time.Second)
 	env := &entities.Environment{
 		ID:   primitive.NewObjectID(),
 		Name: "Test Environment",
@@ -70,7 +70,7 @@ func TestChecker_CheckHealth_HTTPFailure(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := health.NewChecker(5 * time.Second)
+	checker := health.NewCheckerForTesting(5 * time.Second)
 	env := &entities.Environment{
 		ID:   primitive.NewObjectID(),
 		Name: "Test Environment",
@@ -100,7 +100,7 @@ func TestChecker_CheckHealth_Timeout(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := health.NewChecker(1 * time.Second)
+	checker := health.NewCheckerForTesting(1 * time.Second)
 	env := &entities.Environment{
 		ID:   primitive.NewObjectID(),
 		Name: "Test Environment",
@@ -167,7 +167,7 @@ func TestChecker_CheckHealth_TCPSuccess(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := health.NewChecker(5 * time.Second)
+	checker := health.NewCheckerForTesting(5 * time.Second)
 	env := &entities.Environment{
 		ID:   primitive.NewObjectID(),
 		Name: "Test Environment",
@@ -199,7 +199,7 @@ func TestChecker_CheckHealth_HTTPSuccessDefaultStatusCode(t *testing.T) {
 	}))
 	defer server.Close()
 
-	checker := health.NewChecker(5 * time.Second)
+	checker := health.NewCheckerForTesting(5 * time.Second)
 	env := &entities.Environment{
 		ID:   primitive.NewObjectID(),
 		Name: "Test Environment",
