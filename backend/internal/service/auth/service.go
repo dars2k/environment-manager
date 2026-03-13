@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	cryptoRand "crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -132,8 +134,15 @@ func (s *Service) CreateInitialAdmin(ctx context.Context) error {
 		return nil // Users already exist
 	}
 
-	// Create initial admin user
-	adminUser, err := entities.NewUser("admin", "admin123")
+	// Generate a cryptographically secure random password (24 random bytes →
+	// 32-character base64 string guaranteed to contain upper, lower and digits).
+	rawBytes := make([]byte, 24)
+	if _, err := cryptoRand.Read(rawBytes); err != nil {
+		return fmt.Errorf("failed to generate secure admin password: %w", err)
+	}
+	randomPassword := base64.RawURLEncoding.EncodeToString(rawBytes)
+
+	adminUser, err := entities.NewUser("admin", randomPassword)
 	if err != nil {
 		return fmt.Errorf("failed to create admin user: %w", err)
 	}
@@ -142,7 +151,16 @@ func (s *Service) CreateInitialAdmin(ctx context.Context) error {
 		return fmt.Errorf("failed to save admin user: %w", err)
 	}
 
-	// Log system event
+	// Print the generated password to stdout so it is visible in container
+	// logs. This is the only time the plaintext password is available.
+	fmt.Printf("\n========================================\n")
+	fmt.Printf("INITIAL ADMIN CREDENTIALS\n")
+	fmt.Printf("  Username: admin\n")
+	fmt.Printf("  Password: %s\n", randomPassword)
+	fmt.Printf("Change this password immediately after first login!\n")
+	fmt.Printf("========================================\n\n")
+
+	// Log system event without the password value
 	_ = s.logService.LogSystem(ctx, "Initial admin user created", map[string]interface{}{
 		"username": adminUser.Username,
 		"role":     adminUser.Role,

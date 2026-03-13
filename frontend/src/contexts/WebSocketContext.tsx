@@ -31,8 +31,15 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
   const connect = () => {
     try {
+      // The browser WebSocket API does not support custom headers, so the
+      // auth token is passed as a query parameter instead.
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.warn('WebSocket: no auth token available, skipping connection');
+        return;
+      }
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws?token=${encodeURIComponent(token)}`);
 
       ws.onopen = () => {
         console.log('WebSocket connected');

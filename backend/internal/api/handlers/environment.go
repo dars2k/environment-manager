@@ -381,14 +381,17 @@ func (h *EnvironmentHandler) respondJSON(w http.ResponseWriter, status int, data
 
 func (h *EnvironmentHandler) respondError(w http.ResponseWriter, err error) {
 	status := http.StatusInternalServerError
+	// Default to a generic message so internal details are never leaked
 	errorResponse := dto.ErrorInfo{
 		Code:    "INTERNAL_ERROR",
-		Message: err.Error(),
+		Message: "An internal server error occurred",
 	}
 
-	// Map domain errors to HTTP status codes
+	// Map domain errors to HTTP status codes; domain error messages are safe
+	// to expose because they are authored for client consumption.
 	if domainErr, ok := err.(errors.DomainError); ok {
 		errorResponse.Code = domainErr.Code
+		errorResponse.Message = domainErr.Message
 		errorResponse.Details = domainErr.Details
 
 		switch domainErr.Code {
@@ -401,6 +404,9 @@ func (h *EnvironmentHandler) respondError(w http.ResponseWriter, err error) {
 		case "AUTH_INVALID", "AUTH_UNAUTHORIZED":
 			status = http.StatusUnauthorized
 		}
+	} else {
+		// Log internal errors server-side without surfacing details to the client
+		h.logger.WithError(err).Error("Unexpected internal error in environment handler")
 	}
 
 	response := dto.ErrorResponse{
