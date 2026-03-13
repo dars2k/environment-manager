@@ -60,6 +60,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage"
   },
+  "overrides": {
+    "minimatch": "9.0.9"
+  },
   "browserslist": {
     "production": [
       ">0.2%",
