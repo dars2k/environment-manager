@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -170,9 +171,16 @@ func (c *Config) applyEnvOverrides() {
 	c.Security.JWTSecret = os.Getenv("JWT_SECRET")
 	c.SSH.EncryptionKey = os.Getenv("SSH_KEY_ENCRYPTION_KEY")
 
-	// CORS
+	// CORS – split comma-separated list of allowed origins
 	if origins := os.Getenv("ALLOWED_ORIGINS"); origins != "" {
-		c.Security.AllowedOrigins = []string{origins}
+		parts := strings.Split(origins, ",")
+		cleaned := make([]string, 0, len(parts))
+		for _, p := range parts {
+			if s := strings.TrimSpace(p); s != "" {
+				cleaned = append(cleaned, s)
+			}
+		}
+		c.Security.AllowedOrigins = cleaned
 	}
 }
 
