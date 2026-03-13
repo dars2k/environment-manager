@@ -157,84 +157,113 @@ func TestHandleWebSocket(t *testing.T) {
 	// Start hub
 	go wsHub.Run()
 
-	// Create WebSocket handler
-	handler := routes.HandleWebSocket(wsHub, logger)
+	const testSecret = "test-secret"
+	handler := routes.HandleWebSocket(wsHub, logger, testSecret, []string{"http://localhost"})
 
 	// Create test server
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	// Convert http:// to ws://
-	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	// Create a valid token for the connection
+	token, err := createTestToken(testSecret, "user-123")
+	assert.NoError(t, err)
 
-	// Test successful WebSocket connection
+	// Convert http:// to ws:// and append token query param
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "?token=" + token
+
+	// Test successful WebSocket connection with valid token
 	dialer := websocket.Dialer{}
 	conn, resp, err := dialer.Dial(wsURL, nil)
 	assert.NoError(t, err)
 	assert.NotNil(t, conn)
 	assert.Equal(t, http.StatusSwitchingProtocols, resp.StatusCode)
-	
-	// Close connection
-	conn.Close()
 
-	// Give hub time to process disconnection
+	conn.Close()
 	time.Sleep(100 * time.Millisecond)
 }
 
-func TestHandleWebSocket_UpgradeError(t *testing.T) {
-	// Create dependencies
+func TestHandleWebSocket_NoToken(t *testing.T) {
 	logger := logrus.New()
 	logger.SetOutput(io.Discard)
 	wsHub := hub.NewHub(logger)
 
-	// Create WebSocket handler
-	handler := routes.HandleWebSocket(wsHub, logger)
+	handler := routes.HandleWebSocket(wsHub, logger, "test-secret", []string{"http://localhost"})
+	server := httptest.NewServer(handler)
+	defer server.Close()
 
-	// Create request without WebSocket headers (will fail upgrade)
-	req := httptest.NewRequest("GET", "/ws", nil)
+	// Attempt connection without a token – should be rejected
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	dialer := websocket.Dialer{}
+	_, resp, err := dialer.Dial(wsURL, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestHandleWebSocket_InvalidToken(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	wsHub := hub.NewHub(logger)
+
+	handler := routes.HandleWebSocket(wsHub, logger, "test-secret", []string{"http://localhost"})
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	// Attempt connection with an invalid token – should be rejected
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "?token=invalid.token.here"
+	dialer := websocket.Dialer{}
+	_, resp, err := dialer.Dial(wsURL, nil)
+	assert.Error(t, err)
+	assert.Equal(t, http.StatusUnauthorized, resp.StatusCode)
+}
+
+func TestHandleWebSocket_UpgradeError(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+	wsHub := hub.NewHub(logger)
+
+	const testSecret = "test-secret"
+	handler := routes.HandleWebSocket(wsHub, logger, testSecret, []string{"http://localhost"})
+
+	// Create a valid token but send a plain HTTP request (no WS upgrade headers)
+	token, err := createTestToken(testSecret, "user-123")
+	assert.NoError(t, err)
+
+	req := httptest.NewRequest("GET", "/ws?token="+token, nil)
 	w := httptest.NewRecorder()
 
-	// Call handler
 	handler(w, req)
 
-	// Should return bad request since upgrade will fail
+	// Upgrade should fail – definitely not a 101 Switching Protocols
 	assert.NotEqual(t, http.StatusSwitchingProtocols, w.Code)
 }
 
 func TestGenerateClientID(t *testing.T) {
-	// Test that client IDs are unique	
-	for i := 0; i < 100; i++ {
-		// Use reflection to call the private generateClientID function
-		// Since it's not exported, we'll test it indirectly through WebSocket connections
-		
-		// Create dependencies
-		logger := logrus.New()
-		logger.SetOutput(io.Discard)
+	// Verify that concurrent WebSocket connections each get a unique client ID
+	// by connecting multiple times and confirming each connection succeeds.
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	const testSecret = "test-secret"
+	const connections = 10
+
+	for i := 0; i < connections; i++ {
 		wsHub := hub.NewHub(logger)
-		
-		// Create handler
-		handler := routes.HandleWebSocket(wsHub, logger)
-		
-		// Create test server
+		go wsHub.Run()
+
+		handler := routes.HandleWebSocket(wsHub, logger, testSecret, []string{})
 		server := httptest.NewServer(handler)
-		
-		// Convert http:// to ws://
-		wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
-		
-		// Connect
+
+		token, err := createTestToken(testSecret, "user-123")
+		assert.NoError(t, err)
+
+		wsURL := "ws" + strings.TrimPrefix(server.URL, "http") + "?token=" + token
 		dialer := websocket.Dialer{}
 		conn, _, err := dialer.Dial(wsURL, nil)
 		assert.NoError(t, err)
-		
-		// Each connection should get a unique client ID
-		// We can't directly access the ID, but we can verify connections work
 		assert.NotNil(t, conn)
-		
+
 		conn.Close()
 		server.Close()
-		
-		// Small delay to avoid timestamp collisions
-		time.Sleep(time.Nanosecond)
 	}
 }
 

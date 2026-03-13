@@ -61,25 +61,29 @@ func NewManager(config Config) *Manager {
 
 // validateCommand performs basic validation on the command to prevent injection
 func validateCommand(command string) error {
-	// Check for common shell metacharacters that could be used for injection
+	// Reject empty commands
+	if strings.TrimSpace(command) == "" {
+		return fmt.Errorf("command cannot be empty")
+	}
+
+	// Reject null bytes which can be used to truncate strings in some contexts
+	if strings.ContainsRune(command, '\x00') {
+		return fmt.Errorf("command contains null bytes")
+	}
+
+	// Reject newlines which could be used to inject additional commands
+	if strings.ContainsAny(command, "\n\r") {
+		return fmt.Errorf("command contains newline characters")
+	}
+
+	// Reject common shell metacharacters used for command chaining / redirection
 	dangerousChars := []string{";", "&&", "||", "|", "`", "$", "<", ">", "&"}
-	
 	for _, char := range dangerousChars {
 		if strings.Contains(command, char) {
 			return fmt.Errorf("command contains potentially dangerous character: %s", char)
 		}
 	}
-	
-	// Check for newlines which could be used to inject multiple commands
-	if strings.ContainsAny(command, "\n\r") {
-		return fmt.Errorf("command contains newline characters")
-	}
-	
-	// Ensure command is not empty
-	if strings.TrimSpace(command) == "" {
-		return fmt.Errorf("command cannot be empty")
-	}
-	
+
 	return nil
 }
 
