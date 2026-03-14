@@ -27,6 +27,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const errorShownRef = useRef(false); // only show WS error toast once per disconnect
   const dispatch = useAppDispatch();
 
   const connect = () => {
@@ -44,6 +45,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       ws.onopen = () => {
         console.log('WebSocket connected');
         setIsConnected(true);
+        errorShownRef.current = false; // reset so next disconnect shows toast again
       };
 
       ws.onmessage = (event) => {
@@ -57,7 +59,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
 
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
-        dispatch(showError('Real-time connection error'));
+        if (!errorShownRef.current) {
+          errorShownRef.current = true;
+          dispatch(showError('Real-time connection error'));
+        }
       };
 
       ws.onclose = () => {
