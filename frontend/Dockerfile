@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -22,7 +22,7 @@ COPY . .
 RUN npm run build
 
 # Certificate generation stage (optional)
-FROM alpine:latest AS cert-generator
+FROM alpine:3.21 AS cert-generator
 
 # Install OpenSSL
 RUN apk add --no-cache openssl
@@ -45,7 +45,7 @@ RUN openssl genrsa -out nginx.key 2048 && \
     chmod 644 dhparam.pem
 
 # Production stage
-FROM nginx:alpine
+FROM nginx:stable-alpine
 
 # Install wget for health checks
 RUN apk add --no-cache wget
