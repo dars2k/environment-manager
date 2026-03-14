@@ -7,58 +7,123 @@ import {
   Paper,
   Alert,
   Skeleton,
-  Stack,
-  useTheme,
   alpha,
 } from '@mui/material';
-import { Add, CloudQueue } from '@mui/icons-material';
+import {
+  Add,
+  CloudQueue,
+  CheckCircleOutline,
+  ErrorOutline,
+  HelpOutline,
+  LayersOutlined,
+} from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { environmentApi } from '@/api/environments';
 import { EnvironmentCard } from '@/components/environments';
 
+interface StatCardProps {
+  value: number;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ value, label, icon, color }) => (
+  <Paper
+    elevation={1}
+    sx={{
+      p: 2.5,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+      borderLeft: `3px solid ${color}`,
+      position: 'relative',
+      overflow: 'hidden',
+      transition: 'all 0.2s ease',
+      '&:hover': {
+        boxShadow: `0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px ${alpha(color, 0.2)}`,
+        transform: 'translateY(-2px)',
+      },
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: `radial-gradient(ellipse at 0% 50%, ${alpha(color, 0.07)} 0%, transparent 60%)`,
+        pointerEvents: 'none',
+      },
+    }}
+  >
+    <Box
+      sx={{
+        width: 48,
+        height: 48,
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        bgcolor: alpha(color, 0.12),
+        color,
+        boxShadow: `0 0 16px ${alpha(color, 0.25)}`,
+        flexShrink: 0,
+      }}
+    >
+      {icon}
+    </Box>
+    <Box>
+      <Typography
+        variant="h4"
+        sx={{
+          fontFamily: '"Oxanium", sans-serif',
+          fontWeight: 700,
+          lineHeight: 1,
+          color: 'text.primary',
+        }}
+      >
+        {value}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
+        {label}
+      </Typography>
+    </Box>
+  </Paper>
+);
+
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const theme = useTheme();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['environments'],
     queryFn: () => environmentApi.list(),
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
   });
 
-  const handleCreateNew = () => {
-    navigate('/environments/create');
-  };
+  const handleCreateNew = () => navigate('/environments/create');
 
   if (isLoading) {
     return (
       <Box>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
           <Box>
-            <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-              Environments
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Manage your application environments
-            </Typography>
+            <Skeleton variant="text" width={200} height={40} />
+            <Skeleton variant="text" width={260} height={24} />
           </Box>
         </Box>
-        <Grid container spacing={3}>
+        <Grid container spacing={2.5} mb={4}>
           {[1, 2, 3, 4].map((i) => (
+            <Grid item xs={12} sm={6} md={3} key={i}>
+              <Skeleton variant="rectangular" height={88} sx={{ borderRadius: '12px' }} />
+            </Grid>
+          ))}
+        </Grid>
+        <Grid container spacing={3}>
+          {[1, 2, 3].map((i) => (
             <Grid item xs={12} sm={6} lg={4} key={i}>
-              <Paper sx={{ p: 3, height: 300 }}>
-                <Skeleton variant="circular" width={28} height={28} sx={{ mb: 2 }} />
-                <Skeleton variant="text" width="60%" height={32} sx={{ mb: 1 }} />
-                <Skeleton variant="text" width="100%" />
-                <Skeleton variant="text" width="80%" sx={{ mb: 3 }} />
-                <Stack spacing={1}>
-                  <Skeleton variant="rectangular" height={30} />
-                  <Skeleton variant="rectangular" height={30} />
-                  <Skeleton variant="rectangular" height={30} />
-                </Stack>
-              </Paper>
+              <Skeleton variant="rectangular" height={200} sx={{ borderRadius: '12px' }} />
             </Grid>
           ))}
         </Grid>
@@ -77,17 +142,24 @@ export const Dashboard: React.FC = () => {
   }
 
   const environments = data?.environments || [];
+  const healthyCount   = environments.filter(e => e.status.health === 'healthy').length;
+  const unhealthyCount = environments.filter(e => e.status.health === 'unhealthy').length;
+  const unknownCount   = environments.filter(e => e.status.health === 'unknown').length;
 
   return (
     <Box>
-      {/* Header Section */}
+      {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
         <Box>
-          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ fontFamily: '"Oxanium", sans-serif', fontWeight: 700, mb: 0.5 }}
+          >
             Environments
           </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Manage your application environments
+          <Typography variant="body2" color="text.secondary">
+            Monitor and manage your application environments
           </Typography>
         </Box>
         <Button
@@ -95,101 +167,64 @@ export const Dashboard: React.FC = () => {
           startIcon={<Add />}
           onClick={handleCreateNew}
           size="large"
+          sx={{ whiteSpace: 'nowrap' }}
         >
           New Environment
         </Button>
       </Box>
 
-      {/* Stats Bar */}
-      <Grid container spacing={3} mb={4}>
+      {/* Stats */}
+      <Grid container spacing={2.5} mb={4}>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper 
-            sx={{ 
-              p: 3,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.primary.dark, 0.05)} 100%)`,
-              borderColor: alpha(theme.palette.primary.main, 0.2),
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h3" fontWeight={700}>
-                {environments.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Total Environments
-              </Typography>
-            </Stack>
-          </Paper>
+          <StatCard
+            value={environments.length}
+            label="Total Environments"
+            icon={<LayersOutlined fontSize="small" />}
+            color="#818cf8"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper 
-            sx={{ 
-              p: 3,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.success.main, 0.1)} 0%, ${alpha(theme.palette.success.dark, 0.05)} 100%)`,
-              borderColor: alpha(theme.palette.success.main, 0.2),
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h3" fontWeight={700}>
-                {environments.filter(env => env.status.health === 'healthy').length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Healthy
-              </Typography>
-            </Stack>
-          </Paper>
+          <StatCard
+            value={healthyCount}
+            label="Healthy"
+            icon={<CheckCircleOutline fontSize="small" />}
+            color="#34d399"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper 
-            sx={{ 
-              p: 3,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.error.main, 0.1)} 0%, ${alpha(theme.palette.error.dark, 0.05)} 100%)`,
-              borderColor: alpha(theme.palette.error.main, 0.2),
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h3" fontWeight={700}>
-                {environments.filter(env => env.status.health === 'unhealthy').length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Unhealthy
-              </Typography>
-            </Stack>
-          </Paper>
+          <StatCard
+            value={unhealthyCount}
+            label="Unhealthy"
+            icon={<ErrorOutline fontSize="small" />}
+            color="#f87171"
+          />
         </Grid>
         <Grid item xs={12} sm={6} md={3}>
-          <Paper 
-            sx={{ 
-              p: 3,
-              background: `linear-gradient(135deg, ${alpha(theme.palette.warning.main, 0.1)} 0%, ${alpha(theme.palette.warning.dark, 0.05)} 100%)`,
-              borderColor: alpha(theme.palette.warning.main, 0.2),
-            }}
-          >
-            <Stack spacing={1}>
-              <Typography variant="h3" fontWeight={700}>
-                {environments.filter(env => env.status.health === 'unknown').length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Unknown
-              </Typography>
-            </Stack>
-          </Paper>
+          <StatCard
+            value={unknownCount}
+            label="Unknown"
+            icon={<HelpOutline fontSize="small" />}
+            color="#fbbf24"
+          />
         </Grid>
       </Grid>
 
       {environments.length === 0 ? (
-        <Paper 
-          sx={{ 
-            p: 8, 
+        <Paper
+          elevation={1}
+          sx={{
+            p: 8,
             textAlign: 'center',
-            background: `radial-gradient(circle at center, ${alpha(theme.palette.primary.main, 0.03)} 0%, transparent 70%)`,
+            background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.04) 0%, transparent 70%)',
           }}
         >
           <Box
             sx={{
-              width: 120,
-              height: 120,
+              width: 100,
+              height: 100,
               borderRadius: '50%',
-              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              bgcolor: 'rgba(129,140,248,0.08)',
+              border: '1px solid rgba(129,140,248,0.15)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -197,20 +232,15 @@ export const Dashboard: React.FC = () => {
               mb: 3,
             }}
           >
-            <CloudQueue sx={{ fontSize: 60, color: 'primary.main' }} />
+            <CloudQueue sx={{ fontSize: 48, color: '#818cf8' }} />
           </Box>
           <Typography variant="h5" fontWeight={600} gutterBottom>
             No environments configured
           </Typography>
-          <Typography variant="body1" color="text.secondary" mb={4} sx={{ maxWidth: 400, mx: 'auto' }}>
+          <Typography variant="body2" color="text.secondary" mb={4} sx={{ maxWidth: 380, mx: 'auto' }}>
             Get started by creating your first environment to manage your applications
           </Typography>
-          <Button
-            variant="contained"
-            size="large"
-            startIcon={<Add />}
-            onClick={handleCreateNew}
-          >
+          <Button variant="contained" size="large" startIcon={<Add />} onClick={handleCreateNew}>
             Create Your First Environment
           </Button>
         </Paper>

@@ -42,6 +42,14 @@ import { useNotifications } from '@/hooks/useNotifications';
 const DRAWER_WIDTH = 280;
 const DRAWER_WIDTH_COLLAPSED = 64;
 
+const NAV_TEXT_PROPS = { fontWeight: 600, fontSize: '0.875rem', fontFamily: '"DM Sans", sans-serif' };
+
+const NavSectionLabel: React.FC<{ label: string }> = ({ label }) => (
+  <Typography variant="overline" sx={{ px: 2, py: 1, display: 'block', color: 'text.secondary', fontSize: '0.62rem' }}>
+    {label}
+  </Typography>
+);
+
 export const MainLayout: React.FC = () => {
   const theme = useTheme();
   const dispatch = useAppDispatch();
@@ -135,11 +143,30 @@ export const MainLayout: React.FC = () => {
             <MenuIcon />
           </IconButton>
           
-          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, gap: 2 }}>
-            <Logo size={40} />
-            <Typography variant="h6" noWrap component="div" fontWeight={600}>
-              Application Environment Manager
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, gap: 1.5 }}>
+            <Logo size={36} />
+            <Box>
+              <Typography
+                variant="h6"
+                noWrap
+                component="div"
+                sx={{
+                  fontFamily: '"Oxanium", sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1rem',
+                  lineHeight: 1.2,
+                  letterSpacing: '0.02em',
+                }}
+              >
+                Env Manager
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: 'text.secondary', fontSize: '0.65rem', letterSpacing: '0.08em', display: { xs: 'none', sm: 'block' } }}
+              >
+                OPERATIONS DASHBOARD
+              </Typography>
+            </Box>
           </Box>
 
           <Tooltip title="Notifications">
@@ -162,14 +189,16 @@ export const MainLayout: React.FC = () => {
               aria-controls="menu-appbar"
               aria-haspopup="true"
             >
-              <Avatar 
-                sx={{ 
-                  width: 32, 
-                  height: 32,
-                  bgcolor: 'primary.main',
-                  color: 'primary.contrastText',
-                  fontSize: '0.875rem',
-                  fontWeight: 600,
+              <Avatar
+                sx={{
+                  width: 34,
+                  height: 34,
+                  background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)',
+                  color: '#fff',
+                  fontSize: '0.8rem',
+                  fontFamily: '"Oxanium", sans-serif',
+                  fontWeight: 700,
+                  boxShadow: '0 0 12px rgba(99,102,241,0.4)',
                 }}
               >
                 {user?.username?.charAt(0)?.toUpperCase() || 'U'}
@@ -229,7 +258,8 @@ export const MainLayout: React.FC = () => {
         }}
       >
         <Box sx={{ overflow: 'auto', px: sidebarOpen ? 1 : 0.5 }}>
-          <List>
+          {sidebarOpen && <NavSectionLabel label="Navigation" />}
+          <List dense>
             <Tooltip title={!sidebarOpen ? "Dashboard" : ""} placement="right">
               <ListItemButton 
                 onClick={() => navigate('/dashboard')} 
@@ -252,7 +282,7 @@ export const MainLayout: React.FC = () => {
                 {sidebarOpen && (
                   <ListItemText 
                     primary="Dashboard" 
-                    primaryTypographyProps={{ fontWeight: 500 }}
+                    primaryTypographyProps={NAV_TEXT_PROPS}
                   />
                 )}
               </ListItemButton>
@@ -281,14 +311,15 @@ export const MainLayout: React.FC = () => {
                 {sidebarOpen && (
                   <ListItemText 
                     primary="Logs" 
-                    primaryTypographyProps={{ fontWeight: 500 }}
+                    primaryTypographyProps={NAV_TEXT_PROPS}
                   />
                 )}
               </ListItemButton>
             </Tooltip>
           </List>
-          <Divider sx={{ my: 2, mx: sidebarOpen ? 2 : 0.5 }} />
-          <List>
+          <Divider sx={{ my: 1.5, mx: sidebarOpen ? 2 : 0.5 }} />
+          {sidebarOpen && <NavSectionLabel label="Admin" />}
+          <List dense>
             <Tooltip title={!sidebarOpen ? "Users" : ""} placement="right">
               <ListItemButton 
                 onClick={() => navigate('/users')} 
@@ -311,7 +342,7 @@ export const MainLayout: React.FC = () => {
                 {sidebarOpen && (
                   <ListItemText 
                     primary="Users" 
-                    primaryTypographyProps={{ fontWeight: 500 }}
+                    primaryTypographyProps={NAV_TEXT_PROPS}
                   />
                 )}
               </ListItemButton>
@@ -330,7 +361,7 @@ export const MainLayout: React.FC = () => {
                 px: sidebarOpen ? 2 : 1,
                 color: 'error.main',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 68, 68, 0.08)',
+                  backgroundColor: 'rgba(248, 113, 113, 0.08)',
                 },
               }}
             >
@@ -347,7 +378,7 @@ export const MainLayout: React.FC = () => {
               {sidebarOpen && (
                 <ListItemText 
                   primary="Logout" 
-                  primaryTypographyProps={{ fontWeight: 500 }}
+                  primaryTypographyProps={NAV_TEXT_PROPS}
                 />
               )}
             </ListItemButton>

@@ -156,9 +156,9 @@ describe('EnvironmentCard', () => {
 
   it('should display system info when available', () => {
     render(<EnvironmentCard environment={mockEnvironment} />);
-    
-    // The component only displays appVersion in a chip
-    expect(screen.getByText(mockEnvironment.systemInfo.appVersion)).toBeInTheDocument();
+
+    // Version is displayed with a 'v' prefix
+    expect(screen.getByText(`v${mockEnvironment.systemInfo.appVersion}`)).toBeInTheDocument();
   });
 
   it('should truncate long descriptions', () => {
