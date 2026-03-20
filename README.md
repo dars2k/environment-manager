@@ -1,288 +1,311 @@
-# Application Environment Manager
+# Environment Manager
 
-A modern, scalable system for managing application environments with real-time monitoring, SSH-based operations, and comprehensive audit logging.
+A modern, full-stack application for managing deployment environments with real-time monitoring, SSH-based operations, role-based access control, and comprehensive audit logging.
 
-## 🚀 Features
+![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb)
+![License](https://img.shields.io/badge/License-MIT-blue)
 
-- **Environment Management**: Create, update, and delete application environments with ease
-- **Real-time Monitoring**: Live health status updates via WebSocket connections
-- **Command Execution**: Support for both SSH and HTTP-based commands
-- **User Authentication**: Secure JWT-based authentication system with role-based access control
-- **Audit Logging**: Comprehensive logging of all actions and changes
-- **Health Monitoring**: Automated health checks with configurable intervals
-- **Version Management**: Track and upgrade environment versions
-- **Dark Theme UI**: Modern, responsive interface built with Material-UI
-- **Docker Support**: Easy deployment with Docker Compose
+## Features
 
-## 🏗️ Architecture Overview
+- **Environment Management** — Create, update, and delete application environments
+- **Real-time Monitoring** — Live health status via WebSocket connections
+- **SSH & HTTP Operations** — Execute restart and upgrade commands over SSH or HTTP
+- **Role-based Access Control** — Admin, user, and viewer roles with enforced permissions
+- **Audit Logging** — Full audit trail for all actions with user attribution
+- **Automated Health Checks** — Configurable periodic checks with status code or JSON regex validation
+- **Version Management** — Fetch available versions and upgrade environments
+- **Dark Theme UI** — Responsive interface built with Material-UI
 
-The Application Environment Manager follows a clean, modular architecture with clear separation of concerns:
+## Architecture
 
-- **Frontend**: React 18 + TypeScript + Redux Toolkit + Material-UI + Vite
-- **Backend**: Go 1.23+ with clean architecture pattern (Gorilla Mux)
-- **Database**: MongoDB 7.0 for flexible data storage
-- **Real-time Updates**: WebSocket connections for live status updates
-- **Operations**: SSH and HTTP command execution with secure credential management
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + TypeScript + Redux Toolkit + Material-UI + Vite |
+| Backend | Go 1.26 + Gorilla Mux (Clean Architecture) |
+| Database | MongoDB 7.0 |
+| Real-time | WebSocket (Gorilla WebSocket) |
+| Deployment | Docker Compose |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 environment-manager/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── api/            # API client services
-│   │   ├── components/     # Reusable UI components
-│   │   ├── contexts/       # React contexts (WebSocket)
-│   │   ├── hooks/          # Custom React hooks
-│   │   ├── layouts/        # Page layouts
-│   │   ├── pages/          # Page components
-│   │   ├── routes/         # Route definitions
-│   │   ├── store/          # Redux store and slices
-│   │   ├── theme/          # MUI theme configuration
-│   │   ├── types/          # TypeScript types
-│   │   └── test/           # Test utilities
-│   └── public/
-├── backend/                 # Go backend application
-│   ├── cmd/                # Application entrypoints
-│   ├── internal/           # Private application code
-│   │   ├── api/           # HTTP handlers and routes
-│   │   ├── domain/        # Business logic and entities
-│   │   ├── repository/    # Data access layer
-│   │   ├── service/       # Application services
-│   │   └── websocket/     # WebSocket handlers
-│   └── config/            # Configuration files
-├── docker/                # Docker configurations
-├── docs/                  # Documentation
-│   ├── architecture/      # Architecture diagrams and docs
-│   ├── api/              # API documentation
-│   └── deployment/       # Deployment guides
-└── init-mongo.js         # MongoDB initialization script
+├── frontend/                 # React frontend
+│   └── src/
+│       ├── api/              # API client services
+│       ├── components/       # Reusable UI components
+│       ├── contexts/         # React contexts (WebSocket)
+│       ├── hooks/            # Custom React hooks
+│       ├── layouts/          # Page layouts
+│       ├── pages/            # Page components
+│       ├── routes/           # Route definitions
+│       ├── store/            # Redux store and slices
+│       └── theme/            # MUI theme configuration
+├── backend/                  # Go backend
+│   ├── cmd/server/           # Application entry point
+│   └── internal/
+│       ├── api/              # HTTP handlers, middleware, routes
+│       ├── domain/           # Business entities and errors
+│       ├── repository/       # Data access layer
+│       ├── service/          # Application services
+│       └── websocket/        # WebSocket hub
+├── docker/                   # Docker configuration notes
+├── docs/                     # Documentation
+│   ├── api/                  # API reference
+│   ├── architecture/         # Architecture docs
+│   └── deployment/           # Deployment guides
+├── docker-compose.yml
+├── Makefile
+└── .env.example
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
-### Using Docker Compose (Recommended)
+### Prerequisites
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/dars2k/environment-manager.git
-   cd environment-manager
-   ```
+- [Docker](https://docs.docker.com/get-docker/) and Docker Compose
 
-2. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+### 1. Clone the repository
 
-3. **Start the application**
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+git clone https://github.com/dars2k/environment-manager.git
+cd environment-manager
+```
 
-4. **Access the application**
-   - Frontend: http://localhost (port 80)
-   - Backend API: http://localhost:8080
-   - MongoDB Express (debug profile): http://localhost:8081
-   - Default credentials: admin / admin123
+### 2. Configure environment
 
-### Manual Setup
+```bash
+cp .env.example .env
+```
 
-1. **Prerequisites**
-   - Go 1.23+
-   - Node.js 18+
-   - MongoDB 7.0+
+Edit `.env` and set secure values for `JWT_SECRET` and `SSH_KEY_ENCRYPTION_KEY` (see [Configuration](#configuration)).
 
-2. **Backend Setup**
-   ```bash
-   cd backend
-   go mod download
-   go run cmd/server/main.go
-   ```
+### 3. Start the application
 
-3. **Frontend Setup**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+```bash
+make up
+# or
+docker-compose up -d
+```
 
-4. **MongoDB Setup**
-   ```bash
-   docker run -d -p 27017:27017 --name env-manager-mongo mongo:7.0
-   ```
+### 4. Access the application
 
-## 🔧 Configuration
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost |
+| Backend API | http://localhost:8080 |
+| MongoDB Express (debug) | http://localhost:8081 |
 
-### Environment Variables
+> **Admin credentials**: The admin password is auto-generated on first startup and printed to the backend container logs. Run `make logs-backend` to retrieve it.
 
-Create a `.env` file in the root directory:
+## Manual Setup (without Docker)
+
+**Prerequisites:** Go 1.26+, Node.js 22+, MongoDB 7.0+
+
+```bash
+# Start MongoDB
+docker run -d -p 27017:27017 --name env-manager-mongo \
+  -e MONGO_INITDB_ROOT_USERNAME=admin \
+  -e MONGO_INITDB_ROOT_PASSWORD=admin123 \
+  mongo:7.0
+
+# Run backend
+cd backend
+go mod download
+go run cmd/server/main.go
+
+# Run frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
+
+## Configuration
+
+Copy `.env.example` to `.env` and update the values:
 
 ```env
-# MongoDB Configuration
+# MongoDB
 MONGO_ROOT_USER=admin
 MONGO_ROOT_PASSWORD=admin123
 MONGO_DATABASE=app-env-manager
 MONGO_PORT=27017
+MONGODB_URI=mongodb://admin:admin123@mongodb:27017/app-env-manager?authSource=admin
+MONGODB_DATABASE=app-env-manager
 
-# Backend Configuration
-BACKEND_PORT=8080
-JWT_SECRET=your-super-secret-jwt-key-change-this
-SSH_KEY_ENCRYPTION_KEY=your-32-byte-encryption-key-here!
-ALLOWED_ORIGINS=http://localhost
+# Security — generate with: openssl rand -hex 32
+JWT_SECRET=CHANGE_ME_USE_openssl_rand_hex_32
+JWT_EXPIRY=24h
+# Must be exactly 32 bytes — generate with: openssl rand -hex 16
+SSH_KEY_ENCRYPTION_KEY=CHANGE_ME_32BYTES_USE_openssl_rand
 
-# Frontend Configuration
+# Frontend
 FRONTEND_PORT=80
+FRONTEND_HTTPS_PORT=443
+ALLOWED_ORIGINS=http://localhost,https://localhost
+VITE_API_URL=https://localhost/api
+VITE_WS_URL=wss://localhost/ws
 
-# MongoDB Express (Optional)
+# Application
+LOG_LEVEL=info
+SESSION_TIMEOUT=24h
+HEALTH_CHECK_INTERVAL=60s
+HEALTH_CHECK_TIMEOUT=10s
+SSH_CONNECTION_TIMEOUT=30s
+SSH_COMMAND_TIMEOUT=300s
+
+# MongoDB Express (optional debug UI)
 ME_USERNAME=admin
 ME_PASSWORD=admin123
 ME_PORT=8081
 ```
 
-## 📚 API Documentation
+## API Reference
 
-All API endpoints are prefixed with `/api/v1`
+All endpoints are prefixed with `/api/v1`. JWT token required in `Authorization: Bearer <token>` header for all endpoints except login and health check.
 
-### Authentication Endpoints
+### Authentication
 
-- `POST /api/v1/auth/login` - User login
-- `POST /api/v1/auth/logout` - User logout
-- `GET /api/v1/auth/me` - Get current user info
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/auth/login` | Login, receive JWT token |
+| `GET` | `/auth/me` | Get current user info |
+| `POST` | `/auth/logout` | Logout |
 
-### Environment Endpoints
+### Environments (admin: create/update/delete; all roles: read/restart/upgrade)
 
-- `GET /api/v1/environments` - List all environments
-- `GET /api/v1/environments/:id` - Get environment details
-- `POST /api/v1/environments` - Create new environment
-- `PUT /api/v1/environments/:id` - Update environment
-- `DELETE /api/v1/environments/:id` - Delete environment
-- `POST /api/v1/environments/:id/restart` - Restart environment
-- `POST /api/v1/environments/:id/check-health` - Check environment health
-- `GET /api/v1/environments/:id/versions` - Get available versions
-- `POST /api/v1/environments/:id/upgrade` - Upgrade environment
-- `GET /api/v1/environments/:id/logs` - Get environment logs
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/environments` | List all environments |
+| `GET` | `/environments/:id` | Get environment details |
+| `POST` | `/environments` | Create environment *(admin only)* |
+| `PUT` | `/environments/:id` | Update environment *(admin only)* |
+| `DELETE` | `/environments/:id` | Delete environment *(admin only)* |
+| `POST` | `/environments/:id/restart` | Restart environment |
+| `POST` | `/environments/:id/check-health` | Trigger health check |
+| `GET` | `/environments/:id/versions` | List available versions |
+| `POST` | `/environments/:id/upgrade` | Upgrade environment version |
+| `GET` | `/environments/:id/logs` | Get environment logs |
 
-### User Management Endpoints
+### Users *(admin only)*
 
-- `GET /api/v1/users` - List all users
-- `GET /api/v1/users/:id` - Get user details
-- `POST /api/v1/users` - Create new user
-- `PUT /api/v1/users/:id` - Update user
-- `DELETE /api/v1/users/:id` - Delete user
-- `POST /api/v1/users/password/change` - Change password
-- `POST /api/v1/users/:id/password/reset` - Reset user password
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/users` | List all users |
+| `GET` | `/users/:id` | Get user details |
+| `POST` | `/users` | Create user |
+| `PUT` | `/users/:id` | Update user (role, active status) |
+| `DELETE` | `/users/:id` | Delete user |
+| `POST` | `/users/password/change` | Change own password |
+| `POST` | `/users/:id/password/reset` | Reset user password |
 
-### Log Endpoints
+### Logs & Health
 
-- `GET /api/v1/logs` - List all logs
-- `GET /api/v1/logs/count` - Get log count
-- `GET /api/v1/logs/:id` - Get log by ID
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/logs` | List all logs |
+| `GET` | `/logs/count` | Log counts by type/level |
+| `GET` | `/logs/:id` | Get log entry |
+| `GET` | `/health` | API health check |
+| `WS` | `/ws` | WebSocket real-time updates |
 
-### WebSocket Endpoint
+See [API documentation](./docs/api/README.md) for full request/response schemas.
 
-- `WS /ws` - WebSocket connection for real-time updates
+## Development
 
-### Health Check
+### Available Make commands
 
-- `GET /api/v1/health` - Application health check
+```bash
+make build           # Build Docker images
+make up              # Start all services (detached)
+make up-logs         # Start with logs streaming
+make down            # Stop all services
+make logs            # Stream all service logs
+make logs-backend    # Stream backend logs
+make logs-frontend   # Stream frontend logs
+make logs-db         # Stream database logs
+make health          # Check service health
+make test            # Run all tests (backend + frontend)
+make clean           # Remove containers, volumes, and images
+make backend-shell   # Open shell in backend container
+make frontend-shell  # Open shell in frontend container
+make db-shell        # Open MongoDB shell
+make mongo-express   # Start MongoDB Express UI (debug)
+make restart-backend # Restart backend service
+make restart-frontend# Restart frontend service
+make init            # Initialize .env from .env.example
+```
 
-## 🛠️ Development
-
-### Frontend Development
+### Frontend development
 
 ```bash
 cd frontend
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run test         # Run tests
-npm run test:ui      # Run tests with UI
-npm run test:coverage # Run tests with coverage
-npm run lint         # Run ESLint
-npm run format       # Format code with Prettier
+npm run dev           # Start development server
+npm run build         # Build for production
+npm run test          # Run tests
+npm run test:coverage # Run tests with coverage report
+npm run lint          # Run ESLint
+npm run format        # Format with Prettier
 ```
 
-### Backend Development
+### Backend development
 
 ```bash
 cd backend
 go run cmd/server/main.go  # Run development server
-go test ./...              # Run tests
-go build -o app-env-manager cmd/server/main.go  # Build binary
+go test ./...              # Run all tests
+go test -cover ./...       # Run with coverage
 ```
 
-### Docker Development
+## Testing
+
+See [TESTING.md](./TESTING.md) for the full testing guide.
 
 ```bash
-# Build and start all services
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Start with debug profile (includes MongoDB Express)
-docker-compose --profile debug up -d
-```
-
-## 🧪 Testing
-
-See [TESTING.md](./TESTING.md) for comprehensive testing guide.
-
-### Quick Test Commands
-
-```bash
-# Run all unit tests
+# Run all tests
 make test
 
-# Run with Docker
-docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+# Backend only
+cd backend && go test ./...
+
+# Frontend only
+cd frontend && npm test
 ```
 
-## 📖 Documentation
+## Role-based Access Control
 
-- [Architecture Documentation](./docs/architecture/overview.md)
+| Permission | Admin | User | Viewer |
+|-----------|-------|------|--------|
+| View environments | ✓ | ✓ | ✓ |
+| Restart / Upgrade | ✓ | ✓ | ✓ |
+| Create / Edit / Delete environments | ✓ | | |
+| View logs | ✓ | ✓ | ✓ |
+| Manage users | ✓ | | |
+
+## Documentation
+
+- [Architecture Overview](./docs/architecture/overview.md)
 - [Backend Design](./docs/architecture/backend-design.md)
 - [Frontend Design](./docs/architecture/frontend-design.md)
 - [Data Models](./docs/architecture/data-models.md)
 - [UI/UX Design](./docs/architecture/ui-ux-design.md)
-- [API Documentation](./docs/api/README.md)
+- [API Reference](./docs/api/README.md)
 - [Deployment Guide](./docs/deployment/README.md)
 - [Testing Guide](./TESTING.md)
+- [Docker Setup](./docker/README.md)
 
-## 🏭 Production Deployment
+## Contributing
 
-### Docker Production Setup
+1. Fork the repository
+2. Create a branch: `feature/your-feature` or `fix/your-fix`
+3. Run tests: `make test`
+4. Build and verify: `docker compose build && docker compose up -d`
+5. Open a pull request
 
-1. Update environment variables in `.env` for production
-2. Ensure secure JWT_SECRET and SSH_KEY_ENCRYPTION_KEY
-3. Configure proper ALLOWED_ORIGINS
-4. Set strong MongoDB credentials
-5. Deploy using:
-   ```bash
-   docker-compose -f docker-compose.yml up -d
-   ```
+Please ensure all tests pass and the Docker build succeeds before submitting a PR.
 
-### Development Guidelines
+## License
 
-- Follow Go best practices and conventions
-- Use TypeScript strict mode
-- Write unit tests for new features
-- Update documentation as needed
-- Ensure all tests pass before submitting PR
-
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙏 Acknowledgments
-
-- Built with ❤️ using Go, React, and MongoDB
-- UI powered by Material-UI
-- Real-time updates via Gorilla WebSocket
-- HTTP routing with Gorilla Mux
-- State management with Redux Toolkit
-- Form handling with Formik and Yup
-- Charts with Recharts and Chart.js
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.

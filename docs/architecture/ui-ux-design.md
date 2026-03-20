@@ -2,378 +2,235 @@
 
 ## Design Philosophy
 
-The Application Environment Manager UI follows these core principles:
+1. **Dark Theme First** — Modern, eye-friendly dark interface
+2. **Information Density** — Display critical data without clutter
+3. **Real-time Feedback** — Instant visual updates for all status changes
+4. **Role Clarity** — Admin-only actions are hidden, not just disabled, for non-admin users
+5. **Action Clarity** — Clear, intuitive controls with visual hierarchy
+6. **Responsive Design** — Optimized for desktop and tablet
 
-1. **Dark Theme First**: Modern, eye-friendly dark interface
-2. **Information Density**: Display critical data without clutter
-3. **Real-time Feedback**: Instant visual updates for all status changes
-4. **Action Clarity**: Clear, intuitive controls for critical operations
-5. **Responsive Design**: Works seamlessly on desktop and tablet
-
-## Visual Design System
-
-### Color Palette
+## Color Palette
 
 ```css
-/* Primary Colors */
---color-primary: #3B82F6;        /* Blue - Primary actions */
---color-primary-hover: #2563EB;  /* Darker blue - Hover state */
+/* Primary */
+--color-primary:       #3B82F6;   /* Blue — primary actions */
+--color-primary-hover: #2563EB;   /* Darker blue — hover */
 
-/* Status Colors */
---color-success: #10B981;        /* Green - Healthy status */
---color-warning: #F59E0B;        /* Amber - Warning/Unknown */
---color-danger: #EF4444;         /* Red - Unhealthy/Error */
---color-info: #06B6D4;          /* Cyan - Information */
+/* Status */
+--color-success: #10B981;   /* Green — healthy */
+--color-warning: #F59E0B;   /* Amber — warning / unknown */
+--color-danger:  #EF4444;   /* Red — unhealthy / error */
+--color-info:    #06B6D4;   /* Cyan — informational */
 
-/* Background Colors */
---color-bg-primary: #0F172A;     /* Main background */
+/* Backgrounds */
+--color-bg-primary:   #0F172A;   /* Main background */
 --color-bg-secondary: #1E293B;   /* Card backgrounds */
---color-bg-tertiary: #334155;    /* Elevated surfaces */
+--color-bg-tertiary:  #334155;   /* Elevated surfaces */
 
-/* Text Colors */
---color-text-primary: #F8FAFC;   /* Primary text */
---color-text-secondary: #CBD5E1; /* Secondary text */
---color-text-muted: #94A3B8;     /* Muted text */
+/* Text */
+--color-text-primary:   #F8FAFC;   /* Primary */
+--color-text-secondary: #CBD5E1;   /* Secondary */
+--color-text-muted:     #94A3B8;   /* Muted */
 
-/* Border Colors */
---color-border: #334155;         /* Default borders */
---color-border-focus: #3B82F6;   /* Focus borders */
+/* Borders */
+--color-border:       #334155;   /* Default */
+--color-border-focus: #3B82F6;   /* Focus */
 ```
 
-### Typography
+## Typography
 
 ```css
-/* Font Stack */
---font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
-             "Helvetica Neue", Arial, sans-serif;
---font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", 
-             Consolas, monospace;
+--font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+--font-mono: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
 
-/* Font Sizes */
---text-xs: 0.75rem;    /* 12px */
---text-sm: 0.875rem;   /* 14px */
---text-base: 1rem;     /* 16px */
---text-lg: 1.125rem;   /* 18px */
---text-xl: 1.25rem;    /* 20px */
---text-2xl: 1.5rem;    /* 24px */
---text-3xl: 1.875rem;  /* 30px */
-```
-
-## Component Library
-
-### 1. Environment Card
-
-```jsx
-<EnvironmentCard>
-  <CardHeader>
-    <StatusIndicator status="healthy" />
-    <EnvironmentName>production-api</EnvironmentName>
-    <VersionBadge>v2.1.0</VersionBadge>
-  </CardHeader>
-  
-  <CardBody>
-    <MetricRow>
-      <MetricLabel>Last Check</MetricLabel>
-      <MetricValue>2 min ago</MetricValue>
-    </MetricRow>
-    <MetricRow>
-      <MetricLabel>Response Time</MetricLabel>
-      <MetricValue>145ms</MetricValue>
-    </MetricRow>
-    <MetricRow>
-      <MetricLabel>Last Upgrade</MetricLabel>
-      <MetricValue>3 days ago</MetricValue>
-    </MetricRow>
-  </CardBody>
-  
-  <CardActions>
-    <ActionButton variant="primary" icon="restart">
-      Restart
-    </ActionButton>
-    <ActionButton variant="secondary" icon="shutdown">
-      Shutdown
-    </ActionButton>
-    <ActionButton variant="info" icon="upgrade">
-      Upgrade
-    </ActionButton>
-  </CardActions>
-</EnvironmentCard>
-```
-
-### 2. Status Indicator
-
-Real-time animated status indicator with pulse effect:
-
-```css
-/* Healthy Status */
-.status-indicator.healthy {
-  background: #10B981;
-  box-shadow: 0 0 0 0 rgba(16, 185, 129, 1);
-  animation: pulse-green 2s infinite;
-}
-
-@keyframes pulse-green {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-```
-
-### 3. Action Buttons
-
-Three button variants with clear visual hierarchy:
-
-```jsx
-<Button variant="primary">Primary Action</Button>
-<Button variant="secondary">Secondary Action</Button>
-<Button variant="danger">Dangerous Action</Button>
+/* Scale */
+--text-xs:   0.75rem;   /* 12px */
+--text-sm:   0.875rem;  /* 14px */
+--text-base: 1rem;      /* 16px */
+--text-lg:   1.125rem;  /* 18px */
+--text-xl:   1.25rem;   /* 20px */
+--text-2xl:  1.5rem;    /* 24px */
+--text-3xl:  1.875rem;  /* 30px */
 ```
 
 ## Page Layouts
 
-### Dashboard Layout
+### Dashboard
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  [Logo] Application Environment Manager     [User] [Settings]│
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Environments (12 total)          [+ Add Environment]       │
-│  ┌──────────┬──────────┬──────────┬──────────┐           │
-│  │  Env 1   │  Env 2   │  Env 3   │  Env 4   │           │
-│  │  Card    │  Card    │  Card    │  Card    │           │
-│  └──────────┴──────────┴──────────┴──────────┘           │
-│  ┌──────────┬──────────┬──────────┬──────────┐           │
-│  │  Env 5   │  Env 6   │  Env 7   │  Env 8   │           │
-│  │  Card    │  Card    │  Card    │  Card    │           │
-│  └──────────┴──────────┴──────────┴──────────┘           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+│  [Logo] Environment Manager         [Role badge] [Username]  │
+├──────┬──────────────────────────────────────────────────────┤
+│ Nav  │  Environments                     [+ New] (admin)    │
+│      │  ┌──────────┬──────────┬──────────┬──────────┐      │
+│ ○ D  │  │  Env 1   │  Env 2   │  Env 3   │  Env 4   │      │
+│ ○ L  │  │  ● hlthy │  ● hlthy │  ✕ unhlt │  ? unkn  │      │
+│ ○ U* │  └──────────┴──────────┴──────────┴──────────┘      │
+│      │  ┌──────────┬──────────┐                             │
+│      │  │  Env 5   │  Env 6   │                             │
+│      │  │  ● hlthy │  ● hlthy │                             │
+│      │  └──────────┴──────────┘                             │
+└──────┴──────────────────────────────────────────────────────┘
+* U (Users) shown only for admin role
 ```
 
-### Environment Details Layout
+### Environment Card
+
+Each card displays:
+- Status indicator (animated pulse for healthy, static for others)
+- Environment name and version badge
+- Last health check time and response time
+- Quick action buttons: **Restart**, **Upgrade**
+- Edit / Delete icons (admin only)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  [← Back] production-api                    [Edit] [Delete] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────┬───────────────────────────────┐  │
-│  │ Status Overview     │ System Information             │  │
-│  │                     │                                │  │
-│  │ ● Healthy          │ OS: Ubuntu 22.04 LTS           │  │
-│  │ Last check: 2m ago │ App Version: 2.1.0             │  │
-│  │ Response: 145ms    │ IP: 192.168.1.100              │  │
-│  │ Uptime: 99.95%     │ Domain: api.example.com        │  │
-│  └─────────────────────┴───────────────────────────────┘  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ Health Check Configuration                           │  │
-│  │                                                      │  │
-│  │ Endpoint: GET /health                               │  │
-│  │ Interval: Every 30 seconds                          │  │
-│  │ Validation: Status Code 200                         │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ Recent Activity                                      │  │
-│  │                                                      │  │
-│  │ [Timeline of recent actions and status changes]      │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────┐
+│  ● production-api    [v2.1.0]   │
+│  Last check: 2 min ago          │
+│  Response: 145ms                │
+│  Last upgrade: 3 days ago       │
+├─────────────────────────────────┤
+│  [Restart]  [Upgrade]  ✏ 🗑 *  │
+└─────────────────────────────────┘
+* Edit/Delete shown to admin only
 ```
 
-### Create/Edit Environment Form
+### Environment Details
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  [← Cancel] Create New Environment                          │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  Basic Information                                          │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ Name: [____________________]                        │  │
-│  │ Description: [_____________________________________]│  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-│  Connection Details                                         │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ Host/IP: [____________________] Port: [22]         │  │
-│  │ Domain (optional): [____________________]          │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-│  SSH Credentials                                            │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ Username: [____________________]                    │  │
-│  │ Auth Type: (•) SSH Key  ( ) Password               │  │
-│  │ [Upload SSH Key] or paste below:                   │  │
-│  │ [_________________________________________________]│  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-│  Health Check Configuration                                 │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │ [✓] Enable Health Checks                            │  │
-│  │ Endpoint: [____________________]                    │  │
-│  │ Method: [GET ▼]  Interval: [30 ▼] seconds         │  │
-│  │ Validation: (•) Status Code [200]                  │  │
-│  │            ( ) JSON Regex [____________________]   │  │
-│  └─────────────────────────────────────────────────────┘  │
-│                                                             │
-│  [Cancel]                              [Test] [Save]        │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  [← Back]  production-api              [Edit] [Delete] (admin)│
+├──────────────────────────────────────────────────────────────┤
+│  ┌──────────────────────┬───────────────────────────────┐   │
+│  │ Status Overview       │ System Information             │   │
+│  │ ● Healthy             │ OS: Ubuntu 22.04 LTS           │   │
+│  │ Last check: 2m ago   │ App Version: 2.1.0             │   │
+│  │ Response: 145ms      │ IP: 192.168.1.100              │   │
+│  └──────────────────────┴───────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Health Check Config                                   │   │
+│  │ Endpoint: GET /health   Interval: 30s   Code: 200    │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Recent Logs                                           │   │
+│  │ [filterable log timeline]                             │   │
+│  └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Real-time Updates Strategy
+### Create / Edit Environment Form
 
-### WebSocket Connection
+Tabbed layout:
 
-1. **Connection Management**
-   ```javascript
-   // Auto-reconnect with exponential backoff
-   const reconnectDelays = [1000, 2000, 4000, 8000, 16000];
-   ```
+```
+Basic Info | Connection | Health Check | Commands | Upgrade Config
 
-2. **Update Types**
-   - Status changes: Immediate card animation
-   - Metrics updates: Smooth transitions
-   - Operation progress: Real-time progress bars
-
-3. **Visual Feedback**
-   - Pulse animation for incoming updates
-   - Fade transitions for status changes
-   - Loading skeletons during reconnection
-
-### Optimistic UI Updates
-
-```javascript
-// Immediate UI update
-updateEnvironmentUI(envId, { status: 'restarting' });
-
-// Rollback on failure
-api.restart(envId).catch(() => {
-  rollbackEnvironmentUI(envId);
-  showError('Restart failed');
-});
+┌──────────────────────────────────────────────────────────────┐
+│  Name: [________________________]                            │
+│  Description: [______________________________________________]│
+│  Environment URL: [https://example.com]                      │
+│                                                              │
+│                              [Cancel]  [Save]                │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## Responsive Design
+### Users Page (admin only)
 
-### Breakpoints
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Users                                      [+ Create User]  │
+│  ┌──────────┬──────────┬──────────┬──────────┬──────────┐  │
+│  │ Username │  Role    │  Status  │ Last login│  Actions │  │
+│  ├──────────┼──────────┼──────────┼──────────┼──────────┤  │
+│  │ admin    │ [Admin]  │ ● Active │ 2min ago  │  ✏  🗑  │  │
+│  │ alice    │ [User]   │ ● Active │ 1hr ago   │  ✏  🗑  │  │
+│  │ bob      │ [Viewer] │ ○ Disabled│ 3d ago   │  ✏  🗑  │  │
+│  └──────────┴──────────┴──────────┴──────────┴──────────┘  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Status Indicators
+
+Animated pulse for live status:
 
 ```css
-/* Mobile: 320px - 768px */
-@media (max-width: 768px) {
-  /* Single column layout */
+.status-healthy {
+  background: #10B981;
+  animation: pulse-green 2s infinite;
 }
 
-/* Tablet: 768px - 1024px */
-@media (min-width: 768px) and (max-width: 1024px) {
-  /* 2-column grid */
+@keyframes pulse-green {
+  0%   { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70%  { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
-/* Desktop: 1024px - 1440px */
-@media (min-width: 1024px) and (max-width: 1440px) {
-  /* 3-column grid */
-}
-
-/* Large Desktop: 1440px+ */
-@media (min-width: 1440px) {
-  /* 4-column grid */
-}
+.status-unhealthy { background: #EF4444; }
+.status-unknown   { background: #F59E0B; }
 ```
 
-## Accessibility
+## Real-time Updates
 
-### ARIA Labels
+1. WebSocket connection established after login
+2. Status changes → `status_update` message → Redux `updateEnvironmentStatus` action → card re-renders
+3. Operation progress → `operation_update` message → toast notification
+4. Auto-reconnect with exponential backoff on disconnect
 
-```jsx
-<button 
-  aria-label="Restart production-api environment"
-  aria-pressed={isRestarting}
-  disabled={isRestarting}
->
-  {isRestarting ? 'Restarting...' : 'Restart'}
-</button>
-```
-
-### Keyboard Navigation
-
-- `Tab`: Navigate between interactive elements
-- `Enter/Space`: Activate buttons
-- `Escape`: Close modals/dropdowns
-- `Arrow keys`: Navigate within lists
-
-### Color Contrast
-
-All text meets WCAG AA standards:
-- Normal text: 4.5:1 contrast ratio
-- Large text: 3:1 contrast ratio
-
-## Animation Guidelines
-
-### Micro-interactions
+## Animations
 
 ```css
-/* Button hover */
-.button {
+/* Hover lift for environment cards */
+.env-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transition: all 0.2s ease;
 }
 
-/* Card hover */
-.env-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Status change */
+/* Status badge transition */
 .status-indicator {
   transition: background-color 0.3s ease;
 }
 ```
 
-### Loading States
+## Loading States
 
-1. **Skeleton Screens**: For initial page loads
-2. **Spinner**: For button actions
-3. **Progress Bar**: For long operations
-4. **Shimmer Effect**: For content placeholders
+| Scenario | Loading pattern |
+|----------|----------------|
+| Initial page load | Skeleton cards |
+| Button action (restart/upgrade) | Spinner inside button |
+| Long-running operation | Progress indication via WebSocket |
+| Content placeholder | Shimmer effect |
 
 ## Error Handling
 
-### Error Messages
+Errors are surfaced as:
 
-```jsx
-<ErrorMessage type="warning">
-  <Icon name="warning" />
-  <Title>Connection Failed</Title>
-  <Description>
-    Unable to connect to production-api. 
-    Check your network settings.
-  </Description>
-  <Actions>
-    <Button onClick={retry}>Retry</Button>
-    <Button onClick={viewDetails}>View Details</Button>
-  </Actions>
-</ErrorMessage>
+- **Toast notifications** (top-right, auto-dismiss after 5s) — for transient errors (API failures, operation errors)
+- **Inline error messages** — for form validation
+- **Empty state views** — when lists return no data
+
+## Accessibility
+
+- All interactive elements have `aria-label` attributes
+- Role chips use color + text (not color alone) to convey meaning
+- Keyboard navigation: `Tab`, `Enter`/`Space`, `Escape` for modals, arrow keys in lists
+- All text meets WCAG AA contrast ratios (4.5:1 normal text, 3:1 large text)
+
+## Responsive Breakpoints
+
+```css
+/* MUI breakpoints used throughout */
+xs:  0px       /* mobile */
+sm:  600px     /* tablet */
+md:  900px     /* small desktop */
+lg:  1200px    /* desktop */
+xl:  1536px    /* large desktop */
+
+/* Environment card grid */
+xs → 1 column
+sm → 2 columns
+md → 3 columns
+lg → 4 columns
 ```
-
-### Toast Notifications
-
-Position: Top-right corner
-Duration: 5 seconds (auto-dismiss)
-Types: Success, Warning, Error, Info
-
-## Performance Considerations
-
-1. **Virtual Scrolling**: For large environment lists
-2. **Lazy Loading**: For detail views and charts
-3. **Debounced Search**: 300ms delay
-4. **Memoized Components**: For expensive renders
-5. **Code Splitting**: Route-based chunks

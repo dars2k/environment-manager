@@ -1,250 +1,167 @@
 # Architecture Overview
 
-## System Design Principles
+## Design Principles
 
-The Application Environment Manager is designed with the following principles:
-
-1. **Modularity**: Clear separation between components with well-defined interfaces
-2. **Scalability**: Horizontal scaling capabilities for both frontend and backend
-3. **Maintainability**: Clean code architecture with dependency injection
-4. **Security**: JWT authentication, secure credential storage and SSH key management
-5. **Observability**: Comprehensive logging and monitoring capabilities
-6. **Flexibility**: Support for both SSH and HTTP-based environment management
+1. **Modularity** — Clear separation between components with well-defined interfaces
+2. **Scalability** — Stateless API servers ready for horizontal scaling
+3. **Maintainability** — Clean Architecture with dependency injection throughout
+4. **Security** — JWT authentication, RBAC enforcement, encrypted SSH credential storage
+5. **Observability** — Comprehensive audit logging and structured log output
+6. **Flexibility** — SSH and HTTP command types for diverse environment configurations
 
 ## High-Level Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (React + Redux)                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐   │
-│  │  Dashboard  │  │ Environment  │  │    Users &      │   │
-│  │    View     │  │   Details    │  │   Settings      │   │
-│  └─────────────┘  └──────────────┘  └─────────────────┘   │
-│  ┌─────────────┐  ┌──────────────┐  ┌─────────────────┐   │
-│  │    Logs     │  │ Create/Edit  │  │     Login       │   │
-│  │    View     │  │ Environment  │  │                 │   │
-│  └─────────────┘  └──────────────┘  └─────────────────┘   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │ HTTP/WebSocket
-┌─────────────────────────┴───────────────────────────────────┐
-│                    API Gateway (Go/Mux)                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │ REST API     │  │  WebSocket   │  │ Authentication │   │
-│  │ Handlers     │  │   Server     │  │   Middleware   │   │
-│  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────┴───────────────────────────────────┐
-│                   Business Logic Layer                       │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │ Environment  │  │   Health     │  │     Auth       │   │
-│  │  Service     │  │   Checker    │  │   Service      │   │
-│  └──────────────┘  └──────────────┘  └────────────────┘   │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │     SSH      │  │     Log      │  │     User       │   │
-│  │   Manager    │  │   Service    │  │   Service      │   │
-│  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-┌─────────────────────────┴───────────────────────────────────┐
-│                    Data Access Layer                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌────────────────┐   │
-│  │ Environment  │  │     Log      │  │     User       │   │
-│  │ Repository   │  │  Repository  │  │  Repository    │   │
-│  └──────────────┘  └──────────────┘  └────────────────┘   │
-└─────────────────────────┬───────────────────────────────────┘
-                          │
-                    ┌─────┴─────┐
-                    │  MongoDB  │
-                    └───────────┘
+│                  Frontend (React + Redux)                    │
+│  ┌──────────┐  ┌────────────┐  ┌──────────┐  ┌─────────┐  │
+│  │Dashboard │  │Environment │  │  Logs    │  │  Users  │  │
+│  │          │  │  Details   │  │  View    │  │ (admin) │  │
+│  └──────────┘  └────────────┘  └──────────┘  └─────────┘  │
+└───────────────────────┬─────────────────────────────────────┘
+                        │ HTTP / WebSocket
+┌───────────────────────┴─────────────────────────────────────┐
+│                  API Gateway (Go / Gorilla Mux)              │
+│  ┌────────────┐  ┌────────────┐  ┌──────────────────────┐  │
+│  │  REST API  │  │ WebSocket  │  │ Auth + RBAC          │  │
+│  │  Handlers  │  │   Server   │  │ Middleware            │  │
+│  └────────────┘  └────────────┘  └──────────────────────┘  │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────┴─────────────────────────────────────┐
+│                  Business Logic Layer                        │
+│  ┌────────────┐  ┌────────────┐  ┌───────────┐             │
+│  │Environment │  │  Health    │  │   Auth    │             │
+│  │  Service   │  │  Checker   │  │  Service  │             │
+│  └────────────┘  └────────────┘  └───────────┘             │
+│  ┌────────────┐  ┌────────────┐  ┌───────────┐             │
+│  │    SSH     │  │    Log     │  │   User    │             │
+│  │  Manager   │  │  Service   │  │  Service  │             │
+│  └────────────┘  └────────────┘  └───────────┘             │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+┌───────────────────────┴─────────────────────────────────────┐
+│                   Data Access Layer                          │
+│  ┌────────────┐  ┌────────────┐  ┌───────────┐             │
+│  │Environment │  │    Log     │  │   User    │             │
+│  │ Repository │  │ Repository │  │Repository │             │
+│  └────────────┘  └────────────┘  └───────────┘             │
+└───────────────────────┬─────────────────────────────────────┘
+                        │
+                  ┌─────┴─────┐
+                  │  MongoDB  │
+                  └───────────┘
 ```
 
 ## Component Details
 
-### Frontend Components
+### Frontend
 
-1. **Dashboard Component**
-   - Real-time environment status display
-   - WebSocket connection for live updates
-   - Environment cards with quick actions
-   - Health status indicators
-
-2. **Environment Details Component**
-   - Comprehensive environment information
-   - Environment logs viewer
-   - Health check status and history
-   - Action buttons (restart, upgrade, check health)
-
-3. **Environment Form Component**
-   - Dynamic form validation
-   - Command configuration (SSH/HTTP)
-   - Health check configuration
-   - Upgrade configuration
-
-4. **User Management Components**
-   - User list with CRUD operations
-   - Password management
-   - Role-based access control
-
-5. **Redux State Management**
-   - Environment slice for environment data
-   - Logs slice for log management
-   - UI slice for UI state
-   - Notification slice for alerts
+| Component | Responsibility |
+|-----------|---------------|
+| Dashboard | Real-time environment status grid, WebSocket-driven updates |
+| Environment Details | Full environment info, logs, health status, action buttons |
+| Environment Form | Create/edit with SSH/HTTP command config and health check setup |
+| Users (admin only) | CRUD for users, role assignment, active/disable toggle |
+| Redux Store | Environment, logs, UI, and notification slices |
+| WebSocket Context | Persistent connection, auto-reconnect, status event dispatch |
 
 ### Backend Services
 
-1. **Environment Service**
-   - CRUD operations for environments
-   - Command execution (SSH/HTTP)
-   - Version management
-   - Event emission for audit logging
-
-2. **Health Checker Service**
-   - Periodic health checks
-   - HTTP endpoint validation
-   - JSON response validation
-   - Status change notifications
-
-3. **SSH Manager**
-   - Secure SSH connection management
-   - Command execution
-   - Error handling and retries
-   - Key-based authentication
-
-4. **Auth Service**
-   - JWT token generation
-   - User authentication
-   - Password hashing (bcrypt)
-   - Session management
-
-5. **User Service**
-   - User CRUD operations
-   - Password management
-   - Role validation
-
-6. **Log Service**
-   - Audit log creation
-   - Log filtering and pagination
-   - Log aggregation
-
-7. **WebSocket Hub**
-   - Client connection management
-   - Real-time event broadcasting
-   - Connection state tracking
+| Service | Responsibility |
+|---------|---------------|
+| Environment Service | CRUD, SSH/HTTP command execution, version management, event emission |
+| Health Checker | Periodic checks, HTTP endpoint validation, JSON regex validation, status notifications |
+| SSH Manager | Secure SSH connection management, command execution, key-based auth |
+| Auth Service | JWT generation and validation, bcrypt password hashing |
+| User Service | CRUD, role management, password operations |
+| Log Service | Audit log creation, filtering, pagination, user attribution |
+| WebSocket Hub | Client connection management, real-time event broadcasting |
 
 ## Data Flow
 
-### Authentication Flow
 ```
-Login Request → Auth Handler → Auth Service → JWT Generation → Client Storage
-```
+# Authentication
+Login → Auth Handler → Auth Service → JWT Generation → Client
 
-### Real-time Updates
-```
+# Real-time status
 Health Check → Status Change → Log Creation → WebSocket Broadcast → UI Update
-```
 
-### Command Execution
-```
-UI Action → API Request → Validation → Command Service → SSH/HTTP Execution → Log → Response
-```
+# Command execution
+UI Action → API Request → RBAC Check → Command Service → SSH/HTTP → Log → Response
 
-### CRUD Operations
-```
-UI Form → API Request → JWT Validation → Service Layer → Repository → MongoDB → Response
+# CRUD (admin only)
+UI Form → API Request → JWT Validation → RequireAdmin → Service → Repository → MongoDB
 ```
 
 ## Security Architecture
 
-1. **Authentication & Authorization**
-   - JWT-based authentication
-   - Middleware for protected routes
-   - Role-based access control
-   - Token expiration
+### Authentication and Authorization
 
-2. **Credential Management**
-   - Encrypted SSH keys storage
-   - Separate credential references
-   - Password hashing with bcrypt
+- JWT-based authentication with configurable expiry
+- `RequireAdmin` middleware enforces admin-only routes
+- Role extracted from JWT claims and stored in request context via `ctxutil`
+- Three roles: `admin` (full access), `user` (read + operations), `viewer` (read only)
 
-3. **API Security**
-   - CORS configuration
-   - Request validation
-   - Error handling middleware
-   - Logging middleware
+### Protected Routes
 
-4. **Command Security**
-   - Command type validation
-   - SSH connection security
-   - HTTP request validation
+| Route | Minimum role |
+|-------|-------------|
+| `GET /environments`, `GET /logs` | viewer |
+| `POST /environments/:id/restart`, `/upgrade` | user |
+| `POST /environments`, `PUT`, `DELETE` | admin |
+| All `/users` routes | admin |
 
-## Data Models
+### Credential Management
 
-### Core Entities
+- SSH keys are stored encrypted (AES-256) using `SSH_KEY_ENCRYPTION_KEY`
+- Passwords hashed with bcrypt
+- No secrets returned in API responses
 
-1. **Environment**
-   - Basic info (name, description, URL)
-   - Target configuration
-   - Credentials reference
-   - Health check config
-   - Command configuration
-   - Upgrade configuration
-   - Status and timestamps
+### API Security
 
-2. **User**
-   - Authentication credentials
-   - Role and permissions
-   - Timestamps
+- CORS configuration via `ALLOWED_ORIGINS`
+- Request validation on all mutation endpoints
+- Structured error responses (no stack traces in production)
+- Request logging middleware for audit trail
 
-3. **Log**
-   - Environment and user references
-   - Log type and level
-   - Action type
-   - Detailed message and metadata
+## Scalability
 
-## Scalability Strategy
-
-1. **Horizontal Scaling**
-   - Stateless API servers
-   - MongoDB replica sets
-   - WebSocket clustering support
-   - Load balancer ready
-
-2. **Performance Optimization**
-   - Connection pooling (MongoDB)
-   - Efficient query patterns
-   - Pagination for large datasets
-   - Caching strategy (future)
-
-3. **Monitoring & Observability**
-   - Structured logging with Logrus
-   - Health check endpoints
-   - Metrics collection ready
-   - Error tracking
+- **Stateless API** — no server-side session state, scales horizontally behind a load balancer
+- **MongoDB** — connection pooling, indexed queries, supports replica sets
+- **WebSocket** — hub-based broadcast architecture, can be extended with pub/sub for multi-instance
+- **Health checks** — goroutine-pool-based concurrent checking
 
 ## Technology Stack
 
 ### Backend
-- **Language**: Go 1.21+
-- **Web Framework**: Gorilla Mux
-- **Database**: MongoDB
-- **Authentication**: JWT
-- **WebSocket**: Gorilla WebSocket
-- **Logging**: Logrus
-- **SSH**: golang.org/x/crypto/ssh
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| Go | 1.26 | Language |
+| Gorilla Mux | latest | HTTP router |
+| Gorilla WebSocket | latest | WebSocket server |
+| MongoDB driver | latest | Database |
+| Logrus | latest | Structured logging |
+| golang.org/x/crypto | latest | SSH + bcrypt |
+| golang-jwt/jwt | v5 | JWT tokens |
 
 ### Frontend
-- **Framework**: React 18 with TypeScript
-- **State Management**: Redux Toolkit
-- **UI Library**: Material-UI (MUI)
-- **Routing**: React Router v6
-- **HTTP Client**: Axios
-- **WebSocket**: Native WebSocket API
-- **Build Tool**: Vite
+
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| React | 18 | UI framework |
+| TypeScript | 5 | Type safety |
+| Redux Toolkit | latest | State management |
+| Material-UI | v5 | UI component library |
+| React Router | v6 | Client-side routing |
+| Axios | latest | HTTP client |
+| Vite | latest | Build tool |
 
 ### Infrastructure
-- **Containerization**: Docker
-- **Orchestration**: Docker Compose
-- **Reverse Proxy**: Nginx
-- **Database**: MongoDB 7.0
+
+| Technology | Purpose |
+|-----------|---------|
+| Docker Compose | Local orchestration |
+| Nginx | Reverse proxy and static file serving |
+| MongoDB 7.0 | Primary database |

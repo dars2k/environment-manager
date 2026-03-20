@@ -1,8 +1,4 @@
-# API Documentation
-
-## Overview
-
-The Application Environment Manager API is a RESTful API built with Go that provides endpoints for managing environments, executing operations, and streaming real-time updates.
+# API Reference
 
 ## Base URL
 
@@ -12,52 +8,42 @@ http://localhost:8080/api/v1
 
 ## Authentication
 
-All API endpoints (except `/auth/login` and `/health`) require JWT authentication.
+All endpoints except `POST /auth/login` and `GET /health` require a JWT token:
 
 ```http
-Authorization: Bearer <jwt-token>
+Authorization: Bearer <token>
 ```
 
 ## Response Format
 
-All responses follow a consistent format:
+### Success
 
-### Success Response
 ```json
 {
-  "success": true,
   "data": { ... },
   "metadata": {
-    "timestamp": "2025-06-11T18:00:00Z",
-    "version": "1.0.0"
+    "timestamp": "2026-03-20T12:00:00Z"
   }
 }
 ```
 
-### Error Response
+### Error
+
 ```json
 {
-  "success": false,
   "error": {
     "code": "ENV_NOT_FOUND",
-    "message": "Environment not found",
-    "details": { ... }
-  },
-  "metadata": {
-    "timestamp": "2025-06-11T18:00:00Z",
-    "version": "1.0.0"
+    "message": "Environment not found"
   }
 }
 ```
 
-## Endpoints
+---
 
-### Health Check
+## Health Check
 
-#### GET /health
-Check the API health status.
+### `GET /health`
 
-**Response:**
 ```json
 {
   "status": "healthy",
@@ -65,16 +51,17 @@ Check the API health status.
 }
 ```
 
-### Authentication
+---
 
-#### POST /auth/login
-Login with credentials to receive JWT token.
+## Authentication
+
+### `POST /auth/login`
 
 **Request:**
 ```json
 {
   "username": "admin",
-  "password": "password"
+  "password": "your-password"
 }
 ```
 
@@ -83,140 +70,140 @@ Login with credentials to receive JWT token.
 {
   "token": "eyJhbGciOiJIUzI1NiIs...",
   "user": {
-    "id": "user-123",
+    "id": "507f1f77bcf86cd799439011",
     "username": "admin",
-    "email": "admin@example.com",
     "role": "admin",
-    "createdAt": "2025-01-01T00:00:00Z",
-    "updatedAt": "2025-06-11T12:00:00Z"
+    "active": true,
+    "createdAt": "2026-01-01T00:00:00Z",
+    "updatedAt": "2026-03-20T12:00:00Z"
   },
-  "expiresAt": "2025-06-12T18:00:00Z"
+  "expiresAt": "2026-03-21T12:00:00Z"
 }
 ```
 
-#### GET /auth/me
-Get current authenticated user information.
+### `GET /auth/me`
 
 **Response:**
 ```json
 {
-  "id": "user-123",
+  "id": "507f1f77bcf86cd799439011",
   "username": "admin",
-  "email": "admin@example.com",
   "role": "admin",
-  "createdAt": "2025-01-01T00:00:00Z",
-  "updatedAt": "2025-06-11T12:00:00Z"
+  "active": true,
+  "createdAt": "2026-01-01T00:00:00Z",
+  "updatedAt": "2026-03-20T12:00:00Z"
 }
 ```
 
-#### POST /auth/logout
-Logout the current user.
+### `POST /auth/logout`
 
 **Response:**
 ```json
-{
-  "message": "Logged out successfully"
-}
+{ "message": "Logged out successfully" }
 ```
 
-### Users
+---
 
-#### GET /users
-List all users.
+## Users *(admin only)*
 
-**Query Parameters:**
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 20)
+### `GET /users`
+
+**Query parameters:** `page` (default: 1), `limit` (default: 20)
 
 **Response:**
 ```json
 {
   "users": [
     {
-      "id": "user-123",
+      "id": "507f1f77bcf86cd799439011",
       "username": "admin",
-      "email": "admin@example.com",
       "role": "admin",
-      "createdAt": "2025-01-01T00:00:00Z",
-      "updatedAt": "2025-06-11T12:00:00Z"
+      "active": true,
+      "lastLoginAt": "2026-03-20T11:00:00Z",
+      "createdAt": "2026-01-01T00:00:00Z",
+      "updatedAt": "2026-03-20T12:00:00Z"
     }
   ],
   "pagination": {
     "page": 1,
     "limit": 20,
-    "total": 45,
-    "totalPages": 3
+    "total": 5,
+    "totalPages": 1
   }
 }
 ```
 
-#### POST /users
-Create a new user.
+### `GET /users/:id`
+
+Returns a single user object (same schema as above).
+
+### `POST /users`
 
 **Request:**
 ```json
 {
   "username": "newuser",
-  "password": "securepassword",
+  "password": "Securepassword1!",
   "role": "user"
 }
 ```
 
-#### GET /users/:id
-Get a specific user.
+Password requirements: minimum 12 characters, must include uppercase, lowercase, and a digit.
 
-#### PUT /users/:id
-Update a user.
+### `PUT /users/:id`
 
 **Request:**
 ```json
 {
-  "username": "updateduser",
-  "email": "updated@example.com",
-  "role": "admin"
+  "role": "viewer",
+  "active": false
 }
 ```
 
-#### DELETE /users/:id
-Delete a user.
+### `DELETE /users/:id`
 
-#### POST /users/password/change
-Change current user's password.
+**Response:**
+```json
+{ "message": "User deleted successfully" }
+```
+
+### `POST /users/password/change`
+
+Change the currently authenticated user's password.
 
 **Request:**
 ```json
 {
-  "currentPassword": "oldpassword",
-  "newPassword": "newpassword"
+  "currentPassword": "OldPassword1!",
+  "newPassword": "NewPassword1!"
 }
 ```
 
-#### POST /users/:id/password/reset
-Reset a user's password (admin only).
+### `POST /users/:id/password/reset` *(admin only)*
 
 **Request:**
 ```json
 {
-  "newPassword": "resetpassword"
+  "newPassword": "ResetPassword1!"
 }
 ```
 
-### Environments
+---
 
-#### GET /environments
-List all environments with their current status.
+## Environments
 
-**Query Parameters:**
-- `status` (optional): Filter by health status (healthy, unhealthy, unknown)
-- `page` (optional): Page number (default: 1)
-- `limit` (optional): Items per page (default: 20)
+### `GET /environments`
+
+**Query parameters:**
+- `status`: `healthy` | `unhealthy` | `unknown`
+- `page`, `limit`
 
 **Response:**
 ```json
 {
   "environments": [
     {
-      "id": "env-123",
+      "id": "507f1f77bcf86cd799439012",
       "name": "production-api",
       "description": "Production API server",
       "environmentURL": "https://api.example.com",
@@ -228,7 +215,7 @@ List all environments with their current status.
       "credentials": {
         "type": "key",
         "username": "deploy",
-        "keyId": "key-456"
+        "keyId": "507f1f77bcf86cd799439013"
       },
       "healthCheck": {
         "enabled": true,
@@ -239,28 +226,25 @@ List all environments with their current status.
         "validation": {
           "type": "statusCode",
           "value": 200
-        },
-        "headers": {
-          "X-Health-Token": "secret-token"
         }
       },
       "status": {
         "health": "healthy",
-        "lastCheck": "2025-06-11T17:55:00Z",
+        "lastCheck": "2026-03-20T11:55:00Z",
         "message": "All systems operational",
         "responseTime": 145
       },
       "systemInfo": {
         "osVersion": "Ubuntu 22.04 LTS",
         "appVersion": "2.1.0",
-        "lastUpdated": "2025-06-11T12:00:00Z"
+        "lastUpdated": "2026-03-20T10:00:00Z"
       },
       "timestamps": {
-        "createdAt": "2025-01-01T00:00:00Z",
-        "updatedAt": "2025-06-11T12:00:00Z",
-        "lastRestartAt": "2025-06-10T15:30:00Z",
-        "lastUpgradeAt": "2025-06-05T10:00:00Z",
-        "lastHealthyAt": "2025-06-11T17:55:00Z"
+        "createdAt": "2026-01-01T00:00:00Z",
+        "updatedAt": "2026-03-20T10:00:00Z",
+        "lastRestartAt": "2026-03-19T15:30:00Z",
+        "lastUpgradeAt": "2026-03-15T10:00:00Z",
+        "lastHealthyAt": "2026-03-20T11:55:00Z"
       },
       "commands": {
         "type": "ssh",
@@ -276,48 +260,40 @@ List all environments with their current status.
         "jsonPathResponse": "$.versions[*].version",
         "upgradeCommand": {
           "url": "https://api.example.com/upgrade",
-          "method": "POST",
-          "headers": {
-            "Authorization": "Bearer upgrade-token"
-          }
+          "method": "POST"
         }
-      },
-      "metadata": {
-        "team": "backend",
-        "tier": "production"
       }
     }
   ],
   "pagination": {
     "page": 1,
     "limit": 20,
-    "total": 45,
-    "totalPages": 3
+    "total": 12,
+    "totalPages": 1
   }
 }
 ```
 
-#### GET /environments/:id
-Get detailed information about a specific environment.
+### `GET /environments/:id`
 
-#### POST /environments
-Create a new environment.
+Returns a single environment (same schema).
+
+### `POST /environments` *(admin only)*
 
 **Request:**
 ```json
 {
   "name": "staging-api",
   "description": "Staging API server",
-  "environmentURL": "https://staging-api.example.com",
+  "environmentURL": "https://staging.example.com",
   "target": {
     "host": "192.168.1.101",
-    "port": 22,
-    "domain": "staging-api.example.com"
+    "port": 22
   },
   "credentials": {
     "type": "key",
     "username": "deploy",
-    "keyId": "key-789"
+    "keyId": "507f1f77bcf86cd799439013"
   },
   "healthCheck": {
     "enabled": true,
@@ -328,9 +304,6 @@ Create a new environment.
     "validation": {
       "type": "jsonRegex",
       "value": "\"status\":\\s*\"ok\""
-    },
-    "headers": {
-      "X-Health-Token": "secret-token"
     }
   },
   "commands": {
@@ -338,43 +311,25 @@ Create a new environment.
     "restart": {
       "command": "sudo systemctl restart myapp"
     }
-  },
-  "upgradeConfig": {
-    "enabled": true,
-    "type": "ssh",
-    "versionListURL": "https://api.example.com/versions",
-    "versionListMethod": "GET",
-    "jsonPathResponse": "$.versions[*].version",
-    "upgradeCommand": {
-      "command": "sudo /opt/myapp/upgrade.sh {{version}}"
-    }
-  },
-  "metadata": {
-    "team": "backend",
-    "tier": "staging"
   }
 }
 ```
 
-#### PUT /environments/:id
-Update an existing environment.
+### `PUT /environments/:id` *(admin only)*
 
-**Request:** Same structure as POST /environments
+Same structure as `POST /environments`.
 
-#### DELETE /environments/:id
-Delete an environment.
+### `DELETE /environments/:id` *(admin only)*
 
-**Response:**
 ```json
-{
-  "message": "Environment deleted successfully"
-}
+{ "message": "Environment deleted successfully" }
 ```
 
-### Environment Operations
+---
 
-#### POST /environments/:id/restart
-Restart an environment.
+## Environment Operations
+
+### `POST /environments/:id/restart`
 
 **Request:**
 ```json
@@ -387,14 +342,13 @@ Restart an environment.
 **Response:**
 ```json
 {
-  "operationId": "op-456",
+  "operationId": "op-abc123",
   "status": "in_progress",
-  "startedAt": "2025-06-11T18:00:00Z"
+  "startedAt": "2026-03-20T12:00:00Z"
 }
 ```
 
-#### POST /environments/:id/check-health
-Manually trigger a health check for an environment.
+### `POST /environments/:id/check-health`
 
 **Response:**
 ```json
@@ -409,8 +363,7 @@ Manually trigger a health check for an environment.
 }
 ```
 
-#### GET /environments/:id/versions
-Get available versions for upgrade.
+### `GET /environments/:id/versions`
 
 **Response:**
 ```json
@@ -420,57 +373,62 @@ Get available versions for upgrade.
 }
 ```
 
-#### POST /environments/:id/upgrade
-Upgrade an environment to a new version.
+### `POST /environments/:id/upgrade`
 
 **Request:**
 ```json
 {
-  "version": "2.2.0",
-  "backupFirst": true,
-  "rollbackOnFailure": true
+  "version": "2.2.0"
 }
 ```
 
 **Response:**
 ```json
 {
-  "operationId": "op-789",
+  "operationId": "op-def456",
   "status": "in_progress",
-  "startedAt": "2025-06-11T18:00:00Z"
+  "startedAt": "2026-03-20T12:00:00Z"
 }
 ```
 
-#### GET /environments/:id/logs
-Get logs for a specific environment.
+### `GET /environments/:id/logs`
 
-**Query Parameters:**
-- `type` (optional): Filter by log type (health_check, action, system, error, auth)
-- `level` (optional): Filter by log level (info, warning, error, success)
-- `action` (optional): Filter by action type (create, update, delete, restart, upgrade, etc.)
-- `startDate` (optional): Start date (ISO 8601)
-- `endDate` (optional): End date (ISO 8601)
-- `page` (optional): Page number
-- `limit` (optional): Items per page
+**Query parameters:**
+- `type`: `health_check` | `action` | `system` | `error` | `auth`
+- `level`: `info` | `warning` | `error` | `success`
+- `action`: `create` | `update` | `delete` | `restart` | `upgrade` | `login` | `logout`
+- `startDate`, `endDate`: ISO 8601
+- `page`, `limit`
+
+---
+
+## Logs
+
+### `GET /logs`
+
+**Query parameters:**
+- `type`, `level`, `action`
+- `environmentId`, `userId`
+- `startDate`, `endDate`
+- `page`, `limit`
 
 **Response:**
 ```json
 {
   "logs": [
     {
-      "id": "log-789",
-      "timestamp": "2025-06-11T17:30:00Z",
-      "environmentId": "env-123",
+      "id": "507f1f77bcf86cd799439014",
+      "timestamp": "2026-03-20T11:30:00Z",
+      "environmentId": "507f1f77bcf86cd799439012",
       "environmentName": "production-api",
-      "userId": "user-123",
+      "userId": "507f1f77bcf86cd799439011",
       "username": "admin",
       "type": "action",
       "level": "info",
       "action": "restart",
       "message": "Environment restarted successfully",
       "details": {
-        "duration": 45000,
-        "reason": "Apply configuration changes"
+        "duration": 45000
       }
     }
   ],
@@ -483,25 +441,8 @@ Get logs for a specific environment.
 }
 ```
 
-### Logs
+### `GET /logs/count`
 
-#### GET /logs
-Get all system logs.
-
-**Query Parameters:**
-- `type` (optional): Filter by log type (health_check, action, system, error, auth)
-- `level` (optional): Filter by log level (info, warning, error, success)
-- `environmentId` (optional): Filter by environment ID
-- `userId` (optional): Filter by user ID
-- `startDate` (optional): Start date (ISO 8601)
-- `endDate` (optional): End date (ISO 8601)
-- `page` (optional): Page number
-- `limit` (optional): Items per page
-
-#### GET /logs/count
-Get log counts by type and level.
-
-**Response:**
 ```json
 {
   "total": 1500,
@@ -521,81 +462,61 @@ Get log counts by type and level.
 }
 ```
 
-#### GET /logs/:id
-Get a specific log entry.
+### `GET /logs/:id`
 
-### WebSocket Endpoints
+Returns a single log entry.
 
-#### WS /ws
-WebSocket connection for real-time updates.
+---
 
-**Connection:**
+## WebSocket
+
+### `WS /ws`
+
 ```javascript
 const ws = new WebSocket('ws://localhost:8080/ws');
 ```
 
-**Message Types:**
-
-1. **Subscribe to environment updates:**
+**Subscribe to environments:**
 ```json
 {
   "type": "subscribe",
-  "payload": {
-    "environments": ["env-123", "env-456"]
-  }
+  "payload": { "environments": ["507f1f77bcf86cd799439012"] }
 }
 ```
 
-2. **Receive status updates:**
+**Receive status update:**
 ```json
 {
   "type": "status_update",
   "payload": {
-    "environmentId": "env-123",
+    "environmentId": "507f1f77bcf86cd799439012",
     "status": {
       "health": "unhealthy",
       "message": "Connection timeout",
-      "timestamp": "2025-06-11T18:00:00Z"
+      "timestamp": "2026-03-20T12:00:00Z"
     }
   }
 }
 ```
 
-3. **Receive operation updates:**
+**Receive operation update:**
 ```json
 {
   "type": "operation_update",
   "payload": {
-    "operationId": "op-456",
+    "operationId": "op-abc123",
     "status": "completed",
     "output": "Service restarted successfully"
   }
 }
 ```
 
-## Error Codes
+---
 
-| Code | Description |
-|------|-------------|
-| `AUTH_INVALID` | Invalid authentication credentials |
-| `AUTH_EXPIRED` | Authentication token expired |
-| `AUTH_UNAUTHORIZED` | Unauthorized access |
-| `ENV_NOT_FOUND` | Environment not found |
-| `ENV_DUPLICATE` | Environment name already exists |
-| `USER_NOT_FOUND` | User not found |
-| `USER_DUPLICATE` | Username or email already exists |
-| `VALIDATION_ERROR` | Request validation failed |
-| `SSH_CONNECTION_FAILED` | SSH connection failed |
-| `HEALTH_CHECK_FAILED` | Health check failed |
-| `OPERATION_FAILED` | Operation execution failed |
-| `INTERNAL_ERROR` | Internal server error |
+## Command Configuration
 
-## Environment Command Configuration
+### SSH
 
-The environment manager supports two types of command execution:
-
-### SSH Commands
-For environments that support SSH access:
 ```json
 {
   "commands": {
@@ -607,8 +528,8 @@ For environments that support SSH access:
 }
 ```
 
-### HTTP Commands
-For environments that expose HTTP endpoints for management:
+### HTTP
+
 ```json
 {
   "commands": {
@@ -616,47 +537,55 @@ For environments that expose HTTP endpoints for management:
     "restart": {
       "url": "https://api.example.com/admin/restart",
       "method": "POST",
-      "headers": {
-        "Authorization": "Bearer admin-token"
-      },
-      "body": {
-        "graceful": true
-      }
+      "headers": { "Authorization": "Bearer token" },
+      "body": { "graceful": true }
     }
   }
 }
 ```
 
-## Health Check Configuration
+---
 
-Health checks support two validation types:
+## Health Check Validation
 
-### Status Code Validation
+### Status code
+
 ```json
-{
-  "validation": {
-    "type": "statusCode",
-    "value": 200
-  }
-}
+{ "type": "statusCode", "value": 200 }
 ```
 
-### JSON Regex Validation
+### JSON regex
+
 ```json
-{
-  "validation": {
-    "type": "jsonRegex",
-    "value": "\"status\":\\s*\"(ok|healthy)\""
-  }
-}
+{ "type": "jsonRegex", "value": "\"status\":\\s*\"(ok|healthy)\"" }
 ```
 
-## CORS Configuration
+---
 
-The API supports Cross-Origin Resource Sharing (CORS) with the following settings:
-- Allowed Methods: GET, POST, PUT, DELETE, OPTIONS
-- Allowed Headers: All headers (*)
-- Credentials: Allowed
-- Max Age: 86400 seconds (24 hours)
+## Error Codes
 
-The allowed origins are configured in the server configuration.
+| Code | HTTP Status | Description |
+|------|-------------|-------------|
+| `AUTH_INVALID` | 401 | Invalid credentials |
+| `AUTH_EXPIRED` | 401 | Token expired |
+| `AUTH_UNAUTHORIZED` | 401 | Missing or invalid token |
+| `AUTH_FORBIDDEN` | 403 | Insufficient role permissions |
+| `ENV_NOT_FOUND` | 404 | Environment not found |
+| `ENV_DUPLICATE` | 409 | Environment name already exists |
+| `USER_NOT_FOUND` | 404 | User not found |
+| `USER_DUPLICATE` | 409 | Username already exists |
+| `VALIDATION_ERROR` | 400 | Request validation failed |
+| `SSH_CONNECTION_FAILED` | 500 | SSH connection failed |
+| `HEALTH_CHECK_FAILED` | 500 | Health check failed |
+| `OPERATION_FAILED` | 500 | Operation execution failed |
+| `INTERNAL_ERROR` | 500 | Internal server error |
+
+---
+
+## CORS
+
+- **Allowed origins**: configured via `ALLOWED_ORIGINS` environment variable
+- **Allowed methods**: `GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`
+- **Allowed headers**: all
+- **Credentials**: allowed
+- **Max age**: 86400 seconds

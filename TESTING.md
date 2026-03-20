@@ -1,105 +1,131 @@
 # Testing Guide
 
-This document describes the testing infrastructure and strategies for the Application Environment Manager.
+This document describes the testing infrastructure and strategies for the Environment Manager.
 
 ## Overview
 
-The project uses comprehensive testing strategies for both frontend and backend components:
+| Layer | Framework |
+|-------|-----------|
+| Backend | Go `testing` package + [testify](https://github.com/stretchr/testify) |
+| Frontend | [Vitest](https://vitest.dev/) + [React Testing Library](https://testing-library.com/) |
 
-- **Backend**: Go testing with testify framework
-- **Frontend**: Vitest with React Testing Library
+## Running Tests
+
+### All tests
+
+```bash
+make test
+```
+
+### Backend only
+
+```bash
+cd backend
+go test ./...
+
+# With coverage
+go test -cover ./...
+
+# Detailed HTML coverage report
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out
+
+# Verbose output
+go test -v ./...
+
+# Specific package
+go test ./internal/service/auth/...
+go test ./internal/api/handlers/...
+```
+
+### Frontend only
+
+```bash
+cd frontend
+npm test                  # Run once
+npm test -- --watch       # Watch mode
+npm run test:ui           # Run with Vitest UI
+npm run test:coverage     # With coverage report
+npm test EnvironmentCard  # Specific test file
+```
 
 ## Backend Testing
 
 ### Test Structure
 
-Backend tests are organized alongside the code they test:
+Tests live alongside the code they test:
 
 ```
-backend/
-├── internal/
-│   ├── api/
-│   │   └── handlers/
-│   │       ├── auth_handler.go
-│   │       ├── auth_handler_test.go
-│   │       ├── environment.go
-│   │       └── environment_handler_test.go
-│   └── service/
-│       ├── auth/
-│       │   ├── service.go
-│       │   └── service_test.go
-│       └── environment/
-│           ├── service.go
-│           └── service_test.go
-```
-
-### Running Backend Tests
-
-```bash
-# Run all tests
-cd backend
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run tests with detailed coverage report
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
-
-# Run specific package tests
-go test ./internal/service/auth
-go test ./internal/api/handlers
-
-# Run tests with verbose output
-go test -v ./...
+backend/internal/
+├── api/
+│   ├── handlers/
+│   │   ├── auth_handler.go
+│   │   ├── auth_handler_test.go
+│   │   ├── environment.go
+│   │   └── environment_handler_test.go
+│   └── middleware/
+│       ├── auth.go
+│       ├── auth_test.go
+│       ├── mux_auth.go
+│       └── mux_auth_test.go
+└── service/
+    ├── auth/
+    │   ├── service.go
+    │   └── service_test.go
+    └── environment/
+        ├── service.go
+        └── service_test.go
 ```
 
 ### Writing Backend Tests
 
-Backend tests use the [testify](https://github.com/stretchr/testify) framework for assertions and mocking:
+Use testify for assertions and mocking:
 
 ```go
 package auth
 
 import (
+    "context"
     "testing"
+    "time"
+
     "github.com/stretchr/testify/assert"
     "github.com/stretchr/testify/mock"
 )
 
 func TestAuthService_Login(t *testing.T) {
-    // Setup
     mockRepo := new(MockUserRepository)
     service := NewService(mockRepo, "secret", 24*time.Hour)
-    
-    // Test successful login
+
     t.Run("successful login", func(t *testing.T) {
-        // Arrange
-        mockRepo.On("GetByEmail", ctx, "test@example.com").Return(user, nil)
-        
-        // Act
-        token, err := service.Login(ctx, "test@example.com", "password")
-        
-        // Assert
+        mockRepo.On("GetByUsername", mock.Anything, "admin").Return(user, nil)
+
+        resp, err := service.Login(context.Background(), "admin", "correct-password")
+
         assert.NoError(t, err)
-        assert.NotEmpty(t, token)
+        assert.NotEmpty(t, resp.Token)
         mockRepo.AssertExpectations(t)
+    })
+
+    t.Run("invalid credentials", func(t *testing.T) {
+        mockRepo.On("GetByUsername", mock.Anything, "admin").Return(user, nil)
+
+        _, err := service.Login(context.Background(), "admin", "wrong-password")
+
+        assert.ErrorIs(t, err, ErrInvalidCredentials)
     })
 }
 ```
 
 ### Mocking Dependencies
 
-Use testify/mock for creating mock objects:
-
 ```go
 type MockUserRepository struct {
     mock.Mock
 }
 
-func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*entities.User, error) {
-    args := m.Called(ctx, email)
+func (m *MockUserRepository) GetByUsername(ctx context.Context, username string) (*entities.User, error) {
+    args := m.Called(ctx, username)
     if args.Get(0) == nil {
         return nil, args.Error(1)
     }
@@ -107,11 +133,19 @@ func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*ent
 }
 ```
 
+### Debugging Backend Tests
+
+```bash
+# Run a specific test with verbose output
+go test -v -run TestAuthService_Login ./internal/service/auth/...
+
+# Use the delve debugger
+dlv test ./internal/service/auth/...
+```
+
 ## Frontend Testing
 
 ### Test Structure
-
-Frontend tests are organized in `__tests__` directories:
 
 ```
 frontend/src/
@@ -120,35 +154,12 @@ frontend/src/
 │       ├── EnvironmentCard.tsx
 │       └── __tests__/
 │           └── EnvironmentCard.test.tsx
-├── test/
-│   ├── setup.ts
-│   └── test-utils.tsx
-└── vitest.config.ts
-```
-
-### Running Frontend Tests
-
-```bash
-# Run all tests
-cd frontend
-npm test
-
-# Run tests in watch mode
-npm test -- --watch
-
-# Run tests with UI
-npm run test:ui
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run specific test file
-npm test EnvironmentCard
+└── test/
+    ├── setup.ts
+    └── test-utils.tsx
 ```
 
 ### Writing Frontend Tests
-
-Frontend tests use [Vitest](https://vitest.dev/) and [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/):
 
 ```tsx
 import { describe, it, expect } from 'vitest';
@@ -158,22 +169,21 @@ import { render } from '@/test/test-utils';
 import { EnvironmentCard } from '../EnvironmentCard';
 
 describe('EnvironmentCard', () => {
-  it('should render environment information correctly', () => {
+  it('renders environment information', () => {
     render(<EnvironmentCard environment={mockEnvironment} />);
-    
+
     expect(screen.getByText(mockEnvironment.name)).toBeInTheDocument();
     expect(screen.getByText(/healthy/i)).toBeInTheDocument();
   });
 
-  it('should handle user interactions', async () => {
+  it('handles restart action', async () => {
     const user = userEvent.setup();
     render(<EnvironmentCard environment={mockEnvironment} />);
-    
-    const button = screen.getByRole('button', { name: /more/i });
-    await user.click(button);
-    
+
+    await user.click(screen.getByRole('button', { name: /restart/i }));
+
     await waitFor(() => {
-      expect(screen.getByText(/edit/i)).toBeInTheDocument();
+      expect(screen.getByText(/restarting/i)).toBeInTheDocument();
     });
   });
 });
@@ -181,202 +191,104 @@ describe('EnvironmentCard', () => {
 
 ### Test Utilities
 
-The `test-utils.tsx` file provides a custom render function with all necessary providers:
+`test-utils.tsx` provides a custom render that wraps components with all required providers:
 
 ```tsx
 import { render } from '@/test/test-utils';
 
-// This automatically wraps components with:
+// Automatically wraps with:
 // - Redux Provider
 // - React Router
 // - Material-UI Theme Provider
 // - WebSocket Provider
 ```
 
-### Testing Best Practices
+### Debugging Frontend Tests
 
-1. **Test User Behavior**: Focus on testing what users see and do, not implementation details
-2. **Use Semantic Queries**: Prefer `getByRole`, `getByLabelText`, and `getByText` over test IDs
-3. **Async Testing**: Use `waitFor` for async operations and state updates
-4. **Mock External Dependencies**: Mock API calls and WebSocket connections
-5. **Test Accessibility**: Ensure components are accessible by testing with semantic queries
+```bash
+# Run in debug mode
+npm test -- --inspect
+
+# Run specific file with UI
+npm run test:ui -- EnvironmentCard
+```
 
 ## Integration Testing
 
-### API Integration Tests
+The CI pipeline builds and runs the full Docker Compose stack on every PR via `docker-compose.test.yml`.
 
-Create integration tests that test the full API flow:
+For local integration testing:
 
-```go
-func TestEnvironmentAPI_Integration(t *testing.T) {
-    // Setup test database
-    db := setupTestDB(t)
-    defer cleanupTestDB(db)
-    
-    // Create test server
-    router := setupRouter(db)
-    
-    // Test environment creation
-    w := httptest.NewRecorder()
-    req, _ := http.NewRequest("POST", "/api/v1/environments", body)
-    router.ServeHTTP(w, req)
-    
-    assert.Equal(t, 201, w.Code)
-}
+```bash
+# Build and start everything
+docker compose build
+docker compose up -d
+
+# Check health
+make health
+
+# View logs if something is wrong
+make logs
 ```
-
-### E2E Testing
-
-For end-to-end testing, consider using:
-- **Playwright** or **Cypress** for browser automation
-- **Docker Compose** for spinning up the full stack
 
 ## Continuous Integration
 
-### GitHub Actions Workflow
+GitHub Actions runs the following on every push and pull request:
 
 ```yaml
-name: Tests
-
-on: [push, pull_request]
-
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.26'
       - name: Run tests
-        run: |
-          cd backend
-          go test -v -cover ./...
+        run: cd backend && go test -v -cover ./...
 
   frontend-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - name: Install dependencies
-        run: |
-          cd frontend
-          npm ci
-      - name: Run tests
-        run: |
-          cd frontend
-          npm test -- --coverage
+          node-version: '22'
+      - run: cd frontend && npm ci
+      - run: cd frontend && npm test -- --run
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and test with Docker Compose
+        run: docker compose build && docker compose up -d
 ```
 
-## Test Coverage Goals
+## Coverage Goals
 
-- **Backend**: Aim for >80% coverage for business logic
-- **Frontend**: Aim for >70% coverage for components and hooks
-- **Critical Paths**: 100% coverage for authentication, authorization, and data mutations
+| Area | Target |
+|------|--------|
+| Business logic (services) | > 80% |
+| UI components and hooks | > 70% |
+| Authentication and authorization | 100% |
+| Data mutations | 100% |
 
-## Performance Testing
+## Best Practices
 
-### Load Testing
-
-Use tools like [k6](https://k6.io/) or [Apache JMeter](https://jmeter.apache.org/):
-
-```javascript
-// k6 load test example
-import http from 'k6/http';
-import { check } from 'k6';
-
-export let options = {
-  stages: [
-    { duration: '30s', target: 20 },
-    { duration: '1m', target: 100 },
-    { duration: '30s', target: 0 },
-  ],
-};
-
-export default function() {
-  let response = http.get('http://localhost:8080/api/v1/environments');
-  check(response, {
-    'status is 200': (r) => r.status === 200,
-    'response time < 500ms': (r) => r.timings.duration < 500,
-  });
-}
-```
-
-## Security Testing
-
-1. **Dependency Scanning**: Use `npm audit` and `go mod audit`
-2. **SAST**: Integrate tools like SonarQube or Snyk
-3. **Penetration Testing**: Regular security assessments
-
-## Debugging Tests
-
-### Backend Debugging
-
-```bash
-# Run specific test with debugging
-go test -v -run TestAuthService_Login ./internal/service/auth
-
-# Use delve debugger
-dlv test ./internal/service/auth
-```
-
-### Frontend Debugging
-
-```bash
-# Run tests in debug mode
-npm test -- --inspect
-
-# Run specific test file in UI mode
-npm run test:ui -- EnvironmentCard
-```
-
-## Test Data Management
-
-### Fixtures
-
-Store test data in dedicated files:
-
-```
-backend/test/fixtures/
-├── environments.json
-├── users.json
-└── credentials.json
-```
-
-### Test Database
-
-Use a separate test database:
-
-```go
-func setupTestDB(t *testing.T) *mongo.Database {
-    client, err := mongo.Connect(context.Background(), 
-        options.Client().ApplyURI("mongodb://localhost:27017"))
-    require.NoError(t, err)
-    
-    db := client.Database("test_" + t.Name())
-    t.Cleanup(func() {
-        db.Drop(context.Background())
-    })
-    
-    return db
-}
-```
+1. **Test user behavior** — focus on what users see and do, not implementation details
+2. **Semantic queries** — prefer `getByRole`, `getByLabelText`, `getByText` over test IDs
+3. **Async testing** — use `waitFor` for async state updates
+4. **Mock at boundaries** — mock API calls and WebSocket connections, not internal logic
+5. **AAA pattern** — Arrange, Act, Assert
+6. **Isolated tests** — each test should set up and tear down its own state
+7. **Descriptive names** — test names should read like sentences
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Flaky Tests**: Use proper waiting strategies and avoid time-based assertions
-2. **Test Isolation**: Ensure tests don't affect each other by proper cleanup
-3. **Mock Leaks**: Reset mocks between tests
-4. **Slow Tests**: Use parallel testing where appropriate
-
-### Tips
-
-- Keep tests focused and independent
-- Use descriptive test names
-- Follow the AAA pattern (Arrange, Act, Assert)
-- Mock external dependencies
-- Test edge cases and error scenarios
+| Problem | Solution |
+|---------|----------|
+| Flaky tests | Use proper `waitFor` instead of `setTimeout` |
+| Test pollution | Reset mocks and state between tests |
+| Slow tests | Run packages in parallel with `go test -parallel 4 ./...` |
+| Import errors in frontend | Check path aliases in `vite.config.ts` and `tsconfig.json` |

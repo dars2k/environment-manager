@@ -1,195 +1,163 @@
-# Docker Setup for App Environment Manager
+# Docker Setup
 
-This directory contains all the necessary files to run the Application Environment Manager using Docker containers.
+This directory contains supporting files for running the Environment Manager with Docker.
 
 ## Prerequisites
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- Make (optional, for using Makefile commands)
+- [Docker Engine](https://docs.docker.com/engine/install/) 24.0+
+- [Docker Compose](https://docs.docker.com/compose/install/) v2.0+ (included with Docker Desktop)
+- `make` (optional, for Makefile shortcuts)
 
 ## Quick Start
 
-1. **Clone the repository and navigate to the project root**
-
-2. **Initialize the environment**
-   ```bash
-   make init
-   # or manually:
-   cp .env.example .env
-   ```
-
-3. **Update the `.env` file** with your configuration:
-   - Set strong passwords for MongoDB
-   - Generate a secure JWT secret (at least 32 characters)
-   - Set a 32-byte SSH encryption key
-
-4. **Build and start all services**
-   ```bash
-   make build
-   make up
-   # or with docker-compose:
-   docker-compose build
-   docker-compose up -d
-   ```
-
-5. **Access the application**
-   - Frontend: http://localhost
-   - Backend API: http://localhost:8080
-   - MongoDB Express (optional): http://localhost:8081
-
-## Architecture
-
-The Docker setup includes:
-
-- **MongoDB**: Database for storing environments and audit logs
-- **Backend**: Go API server with WebSocket support
-- **Frontend**: React application served by Nginx
-- **MongoDB Express**: Optional web-based MongoDB admin interface
-
-## Environment Variables
-
-Key environment variables (see `.env.example`):
-
 ```bash
-# MongoDB
-MONGO_ROOT_USER=admin
-MONGO_ROOT_PASSWORD=<secure-password>
-MONGO_DATABASE=app-env-manager
+# 1. Copy and configure environment variables
+cp .env.example .env
+# Edit .env — set secure JWT_SECRET and SSH_KEY_ENCRYPTION_KEY
 
-# Backend
-JWT_SECRET=<32+ character secret>
-SSH_KEY_ENCRYPTION_KEY=<exactly 32 bytes>
-
-# Ports
-FRONTEND_PORT=80
-BACKEND_PORT=8080
-MONGO_PORT=27017
-```
-
-## Common Commands
-
-### Using Make
-
-```bash
-# Start services
+# 2. Build and start all services
+make build
 make up
 
-# View logs
-make logs
-make logs-backend
-make logs-frontend
-
-# Stop services
-make down
-
-# Clean everything (including volumes)
-make clean
-
-# Access containers
-make backend-shell
-make db-shell
-
-# Health check
+# 3. Check that everything is running
 make health
-
-# Debug with MongoDB Express
-make mongo-express
 ```
 
-### Using Docker Compose
+> **Admin credentials**: The admin password is auto-generated on first startup and printed to the backend logs. Retrieve it with `make logs-backend`.
+
+## Services
+
+| Service | Description | Default port |
+|---------|-------------|-------------|
+| `mongodb` | MongoDB 7.0 database | 27017 |
+| `backend` | Go API server with WebSocket support | 8080 |
+| `frontend` | React app served by Nginx | 80 |
+| `mongo-express` | MongoDB admin UI (debug profile only) | 8081 |
+
+## Access Points
+
+- **Frontend**: http://localhost
+- **Backend API**: http://localhost:8080
+- **MongoDB Express** (optional): http://localhost:8081
+
+## Make Commands
+
+```bash
+# Lifecycle
+make build           # Build all Docker images
+make up              # Start services in background
+make up-logs         # Start services with log streaming
+make down            # Stop services
+make clean           # Remove containers, volumes, and images
+
+# Logs
+make logs            # Stream all service logs
+make logs-backend    # Stream backend logs
+make logs-frontend   # Stream frontend logs
+make logs-db         # Stream database logs
+
+# Service management
+make restart-backend # Restart backend
+make restart-frontend# Restart frontend
+make build-backend   # Rebuild backend image only
+make build-frontend  # Rebuild frontend image only
+
+# Debugging
+make health          # Check service health status
+make backend-shell   # Open shell in backend container
+make frontend-shell  # Open shell in frontend container
+make db-shell        # Open MongoDB shell
+make mongo-express   # Start MongoDB Express UI
+```
+
+## Docker Compose Commands (direct)
 
 ```bash
 # Start services
-docker-compose up -d
+docker compose up -d
 
-# View logs
-docker-compose logs -f
+# Stream logs
+docker compose logs -f
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Rebuild a specific service
-docker-compose build backend
-docker-compose up -d backend
+docker compose build backend
+docker compose up -d backend
 
 # Execute commands in containers
-docker-compose exec backend /bin/sh
-docker-compose exec mongodb mongosh
+docker compose exec backend /bin/sh
+docker compose exec mongodb mongosh
 ```
 
-## Development vs Production
+## Key Environment Variables
 
-### Development Mode
-- Source code mounted as volumes
-- Hot reloading enabled
-- Debug tools available
+See `.env.example` for the full list. Critical values to set for production:
 
 ```bash
-make dev
-# or
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
-```
+# Generate with: openssl rand -hex 32
+JWT_SECRET=<strong-secret>
 
-### Production Mode
-- Optimized builds
-- Security hardening
-- No source code mounting
+# Must be exactly 32 bytes — generate with: openssl rand -hex 16
+SSH_KEY_ENCRYPTION_KEY=<32-byte-key>
 
-```bash
-make prod
-# or
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Strong MongoDB credentials
+MONGO_ROOT_PASSWORD=<strong-password>
+
+# Comma-separated allowed origins
+ALLOWED_ORIGINS=https://your-domain.com
 ```
 
 ## Troubleshooting
 
-### Services not starting
-1. Check logs: `make logs`
-2. Verify port availability: `netstat -tulpn | grep -E '80|8080|27017'`
-3. Ensure Docker daemon is running: `docker ps`
+**Services not starting**
+```bash
+make logs           # Check for error messages
+docker compose ps   # Check container status
+```
 
-### Database connection issues
-1. Verify MongoDB is healthy: `docker-compose ps`
-2. Check credentials in `.env` match those in `docker-compose.yml`
-3. Inspect MongoDB logs: `make logs-db`
+**Port already in use**
+```bash
+# Check what's using the port
+lsof -i :80
+lsof -i :8080
+lsof -i :27017
+```
 
-### Frontend not loading
-1. Check Nginx logs: `docker-compose logs frontend`
-2. Verify backend is accessible: `curl http://localhost:8080/api/v1/health`
-3. Check browser console for errors
+**Database connection issues**
+```bash
+make logs-db        # Check MongoDB logs
+# Verify .env credentials match docker-compose.yml
+```
 
-### Permission issues
-- Ensure proper ownership: Files are owned by non-root user in containers
-- Check Docker socket permissions if using bind mounts
-
-## Security Considerations
-
-1. **Passwords**: Always use strong, unique passwords in production
-2. **Encryption**: The SSH_KEY_ENCRYPTION_KEY must be exactly 32 bytes
-3. **Network**: The app-network is isolated by default
-4. **Non-root**: All containers run as non-root users
-5. **Health checks**: Built-in health monitoring for all services
+**Frontend not loading**
+```bash
+docker compose logs frontend
+curl http://localhost:8080/api/v1/health  # Check if backend is up
+```
 
 ## Backup and Restore
 
 ### Backup MongoDB
+
 ```bash
-docker-compose exec mongodb mongodump \
+docker compose exec mongodb mongodump \
   --username=admin \
   --password=<password> \
   --authenticationDatabase=admin \
   --db=app-env-manager \
   --out=/backup
 
-docker cp app-env-manager-db:/backup ./mongodb-backup
+docker cp $(docker compose ps -q mongodb):/backup ./mongodb-backup
 ```
 
 ### Restore MongoDB
-```bash
-docker cp ./mongodb-backup app-env-manager-db:/backup
 
-docker-compose exec mongodb mongorestore \
+```bash
+docker cp ./mongodb-backup $(docker compose ps -q mongodb):/backup
+
+docker compose exec mongodb mongorestore \
   --username=admin \
   --password=<password> \
   --authenticationDatabase=admin \
@@ -197,25 +165,19 @@ docker-compose exec mongodb mongorestore \
   /backup/app-env-manager
 ```
 
+## Security Notes
+
+1. Always use strong, unique passwords and secrets in production
+2. `SSH_KEY_ENCRYPTION_KEY` must be exactly 32 bytes
+3. Services communicate over an isolated Docker network (`app-network`)
+4. All containers run as non-root users
+5. Built-in health checks for all services
+
 ## Monitoring
 
-- Backend health: http://localhost:8080/api/v1/health
-- Frontend health: http://localhost/health
-- Container status: `docker-compose ps`
-- Resource usage: `docker stats`
-
-## Advanced Configuration
-
-### Custom SSL Certificates
-1. Mount certificates in `frontend` service
-2. Update `nginx.conf` for HTTPS
-3. Update `ALLOWED_ORIGINS` in backend
-
-### Scaling
-```bash
-# Scale backend instances
-docker-compose up -d --scale backend=3
-```
-
-### Custom Networks
-Modify `docker-compose.yml` to use external networks for integration with other services.
+| Check | Command |
+|-------|---------|
+| Service status | `docker compose ps` |
+| Resource usage | `docker stats` |
+| Backend health API | `curl http://localhost:8080/api/v1/health` |
+| All service logs | `make logs` |
