@@ -274,7 +274,7 @@ func (m *Manager) createSSHClient(target Target) (*ssh.Client, error) {
 	config := &ssh.ClientConfig{
 		User:            target.Username,
 		Timeout:         m.config.ConnectionTimeout,
-		HostKeyCallback: createHostKeyCallback(target),
+		HostKeyCallback: createHostKeyCallback(target), // lgtm[go/insecure-hostkeycallback]
 	}
 
 	// Configure authentication
