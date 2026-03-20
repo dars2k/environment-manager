@@ -10,8 +10,14 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
   IconButton,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -27,9 +33,11 @@ import {
 import {
   Add as AddIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
   VpnKey as KeyIcon,
 } from '@mui/icons-material';
-import { usersApi, User, CreateUserRequest, UserRole } from '@/api/users';
+import { useSnackbar } from 'notistack';
+import { usersApi, User, CreateUserRequest, UpdateUserRequest, UserRole } from '@/api/users';
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -38,33 +46,31 @@ interface CreateUserDialogProps {
 }
 
 const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onUserCreated }) => {
-  const [formData, setFormData] = useState<CreateUserRequest>({
+  const [formData, setFormData] = useState<CreateUserRequest & { role: UserRole }>({
     username: '',
     password: '',
+    role: 'user',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
 
   const validateForm = (): boolean => {
     const newErrors: { [key: string]: string } = {};
-
     if (!formData.username || formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
     }
-    if (!formData.password || formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-
     setLoading(true);
     try {
-      await usersApi.createUser(formData);
+      await usersApi.createUser({ username: formData.username, password: formData.password, role: formData.role });
       onUserCreated();
       handleClose();
     } catch (error: any) {
@@ -75,7 +81,7 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onUs
   };
 
   const handleClose = () => {
-    setFormData({ username: '', password: '' });
+    setFormData({ username: '', password: '', role: 'user' });
     setErrors({});
     onClose();
   };
@@ -108,19 +114,109 @@ const CreateUserDialog: React.FC<CreateUserDialogProps> = ({ open, onClose, onUs
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           error={!!errors.password}
-          helperText={errors.password}
+          helperText={errors.password || 'Minimum 6 characters'}
           disabled={loading}
         />
-        <Alert severity="info" sx={{ mt: 2 }}>
-          New users are created with admin role by default.
-        </Alert>
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Role</InputLabel>
+          <Select
+            value={formData.role}
+            label="Role"
+            onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+            disabled={loading}
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
+          </Select>
+        </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          Cancel
-        </Button>
+        <Button onClick={handleClose} disabled={loading}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Create'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface EditUserDialogProps {
+  open: boolean;
+  user: User | null;
+  onClose: () => void;
+  onUserUpdated: () => void;
+}
+
+const EditUserDialog: React.FC<EditUserDialogProps> = ({ open, user, onClose, onUserUpdated }) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const [role, setRole] = useState<UserRole>('user');
+  const [active, setActive] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setRole(user.role);
+      setActive(user.active);
+    }
+  }, [user]);
+
+  const handleSubmit = async () => {
+    if (!user) return;
+    setLoading(true);
+    setError('');
+    try {
+      const req: UpdateUserRequest = { role, active };
+      await usersApi.updateUser(user.id, req);
+      enqueueSnackbar(`User "${user.username}" updated successfully`, { variant: 'success' });
+      onUserUpdated();
+      onClose();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle>Edit User: {user?.username}</DialogTitle>
+      <DialogContent>
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+        <FormControl fullWidth margin="dense">
+          <InputLabel>Role</InputLabel>
+          <Select
+            value={role}
+            label="Role"
+            onChange={(e) => setRole(e.target.value as UserRole)}
+            disabled={loading}
+          >
+            <MenuItem value="user">User</MenuItem>
+            <MenuItem value="admin">Admin</MenuItem>
+          </Select>
+        </FormControl>
+        <Box sx={{ mt: 2 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+                disabled={loading}
+                color="success"
+              />
+            }
+            label={active ? 'Active' : 'Disabled'}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={loading}>Cancel</Button>
+        <Button onClick={handleSubmit} variant="contained" disabled={loading}>
+          {loading ? <CircularProgress size={24} /> : 'Save'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -142,20 +238,16 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({ open, user, o
 
   const handleSubmit = async () => {
     if (!user) return;
-
-    if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
       return;
     }
-
     if (newPassword !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       await usersApi.resetPassword(user.id, { newPassword });
       onPasswordReset();
@@ -191,6 +283,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({ open, user, o
           fullWidth
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
+          helperText="Minimum 6 characters"
           disabled={loading}
         />
         <TextField
@@ -204,9 +297,7 @@ const ResetPasswordDialog: React.FC<ResetPasswordDialogProps> = ({ open, user, o
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={loading}>
-          Cancel
-        </Button>
+        <Button onClick={handleClose} disabled={loading}>Cancel</Button>
         <Button onClick={handleSubmit} variant="contained" color="warning" disabled={loading}>
           {loading ? <CircularProgress size={24} /> : 'Reset Password'}
         </Button>
@@ -220,6 +311,7 @@ const Users: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [editDialog, setEditDialog] = useState<{ open: boolean; user: User | null }>({ open: false, user: null });
   const [resetPasswordDialog, setResetPasswordDialog] = useState<{ open: boolean; user: User | null }>({
     open: false,
     user: null,
@@ -248,7 +340,6 @@ const Users: React.FC = () => {
 
   const handleDeleteUser = async () => {
     if (!deleteConfirmDialog.user) return;
-
     try {
       await usersApi.deleteUser(deleteConfirmDialog.user.id);
       await loadUsers();
@@ -260,12 +351,9 @@ const Users: React.FC = () => {
 
   const getRoleColor = (role: UserRole): 'error' | 'primary' | 'default' => {
     switch (role) {
-      case 'admin':
-        return 'error';
-      case 'user':
-        return 'primary';
-      default:
-        return 'default';
+      case 'admin': return 'error';
+      case 'user': return 'primary';
+      default: return 'default';
     }
   };
 
@@ -319,26 +407,27 @@ const Users: React.FC = () => {
                   <TableRow key={user.id}>
                     <TableCell>{user.username}</TableCell>
                     <TableCell>
-                      <Chip
-                        label={user.role}
-                        color={getRoleColor(user.role)}
-                        size="small"
-                      />
+                      <Chip label={user.role} color={getRoleColor(user.role)} size="small" />
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={user.active ? 'Active' : 'Inactive'}
+                        label={user.active ? 'Active' : 'Disabled'}
                         color={user.active ? 'success' : 'default'}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>
-                      {user.lastLoginAt
-                        ? new Date(user.lastLoginAt).toLocaleDateString()
-                        : 'Never'}
+                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString() : 'Never'}
                     </TableCell>
                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell align="right">
+                      <IconButton
+                        size="small"
+                        onClick={() => setEditDialog({ open: true, user })}
+                        title="Edit User"
+                      >
+                        <EditIcon />
+                      </IconButton>
                       <IconButton
                         size="small"
                         color="primary"
@@ -370,6 +459,13 @@ const Users: React.FC = () => {
         onUserCreated={loadUsers}
       />
 
+      <EditUserDialog
+        open={editDialog.open}
+        user={editDialog.user}
+        onClose={() => setEditDialog({ open: false, user: null })}
+        onUserUpdated={loadUsers}
+      />
+
       <ResetPasswordDialog
         open={resetPasswordDialog.open}
         user={resetPasswordDialog.user}
@@ -389,9 +485,7 @@ const Users: React.FC = () => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmDialog({ open: false, user: null })}>
-            Cancel
-          </Button>
+          <Button onClick={() => setDeleteConfirmDialog({ open: false, user: null })}>Cancel</Button>
           <Button onClick={handleDeleteUser} color="error" variant="contained">
             Delete
           </Button>

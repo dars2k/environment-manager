@@ -70,30 +70,37 @@ func NewRouter(cfg Config) http.Handler {
 	protected.HandleFunc("/auth/me", adapter.GinHandlerAdapter(cfg.AuthHandler.GetCurrentUser)).Methods("GET")
 	protected.HandleFunc("/auth/logout", adapter.GinHandlerAdapter(cfg.AuthHandler.Logout)).Methods("POST")
 
-	// User routes
+	// User routes — all require admin
 	userRoutes := protected.PathPrefix("/users").Subrouter()
+	userRoutes.Use(middleware.RequireAdmin)
 	userRoutes.HandleFunc("", adapter.GinHandlerAdapter(cfg.UserHandler.List)).Methods("GET")
 	userRoutes.HandleFunc("", adapter.GinHandlerAdapter(cfg.UserHandler.Create)).Methods("POST")
 	userRoutes.HandleFunc("/{id}", adapter.GinHandlerAdapter(cfg.UserHandler.Get)).Methods("GET")
 	userRoutes.HandleFunc("/{id}", adapter.GinHandlerAdapter(cfg.UserHandler.Update)).Methods("PUT")
 	userRoutes.HandleFunc("/{id}", adapter.GinHandlerAdapter(cfg.UserHandler.Delete)).Methods("DELETE")
-	userRoutes.HandleFunc("/password/change", adapter.GinHandlerAdapter(cfg.UserHandler.ChangePassword)).Methods("POST")
 	userRoutes.HandleFunc("/{id}/password/reset", adapter.GinHandlerAdapter(cfg.UserHandler.ResetPassword)).Methods("POST")
+
+	// Password change is self-service — any authenticated user may call it
+	protected.HandleFunc("/users/password/change", adapter.GinHandlerAdapter(cfg.UserHandler.ChangePassword)).Methods("POST")
 
 	// Environment routes
 	envRoutes := protected.PathPrefix("/environments").Subrouter()
-	envRoutes.HandleFunc("", cfg.EnvironmentHandler.List).Methods("GET")
-	envRoutes.HandleFunc("", cfg.EnvironmentHandler.Create).Methods("POST")
-	envRoutes.HandleFunc("/{id}", cfg.EnvironmentHandler.Get).Methods("GET")
-	envRoutes.HandleFunc("/{id}", cfg.EnvironmentHandler.Update).Methods("PUT")
-	envRoutes.HandleFunc("/{id}", cfg.EnvironmentHandler.Delete).Methods("DELETE")
 
-	// Environment operations
-	envRoutes.HandleFunc("/{id}/restart", cfg.EnvironmentHandler.Restart).Methods("POST")
-	envRoutes.HandleFunc("/{id}/check-health", cfg.EnvironmentHandler.CheckHealth).Methods("POST")
+	// Read-only: any authenticated user
+	envRoutes.HandleFunc("", cfg.EnvironmentHandler.List).Methods("GET")
+	envRoutes.HandleFunc("/{id}", cfg.EnvironmentHandler.Get).Methods("GET")
 	envRoutes.HandleFunc("/{id}/versions", cfg.EnvironmentHandler.GetVersions).Methods("GET")
-	envRoutes.HandleFunc("/{id}/upgrade", cfg.EnvironmentHandler.Upgrade).Methods("POST")
 	envRoutes.HandleFunc("/{id}/logs", adapter.GinHandlerAdapter(cfg.LogHandler.GetEnvironmentLogs)).Methods("GET")
+
+	// Operator actions: any authenticated user
+	envRoutes.HandleFunc("/{id}/restart", cfg.EnvironmentHandler.Restart).Methods("POST")
+	envRoutes.HandleFunc("/{id}/upgrade", cfg.EnvironmentHandler.Upgrade).Methods("POST")
+	envRoutes.HandleFunc("/{id}/check-health", cfg.EnvironmentHandler.CheckHealth).Methods("POST")
+
+	// Mutating CRUD: admin only
+	envRoutes.Handle("", middleware.RequireAdmin(http.HandlerFunc(cfg.EnvironmentHandler.Create))).Methods("POST")
+	envRoutes.Handle("/{id}", middleware.RequireAdmin(http.HandlerFunc(cfg.EnvironmentHandler.Update))).Methods("PUT")
+	envRoutes.Handle("/{id}", middleware.RequireAdmin(http.HandlerFunc(cfg.EnvironmentHandler.Delete))).Methods("DELETE")
 
 	// Log routes
 	logRoutes := protected.PathPrefix("/logs").Subrouter()

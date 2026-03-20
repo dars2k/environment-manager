@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"app-env-manager/internal/api/handlers"
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"app-env-manager/internal/service/log"
@@ -329,6 +330,8 @@ func (suite *UserHandlerTestSuite) TestCreate_Success() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.POST("/api/users", handler.Create)
@@ -456,6 +459,8 @@ func (suite *UserHandlerTestSuite) TestUpdate_Success() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.PUT("/api/users/:id", handler.Update)
@@ -575,6 +580,8 @@ func (suite *UserHandlerTestSuite) TestDelete_Success() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.DELETE("/api/users/:id", handler.Delete)
@@ -649,6 +656,8 @@ func (suite *UserHandlerTestSuite) TestDelete_Error() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.DELETE("/api/users/:id", handler.Delete)
@@ -843,6 +852,8 @@ func (suite *UserHandlerTestSuite) TestResetPassword_Success() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.PUT("/api/users/:id/reset-password", handler.ResetPassword)
@@ -956,6 +967,8 @@ func (suite *UserHandlerTestSuite) TestResetPassword_Error() {
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		c.Set("user", currentUser)
+		ctx := ctxutil.WithUserFull(c.Request.Context(), currentUser.ID.Hex(), currentUser.Username, string(currentUser.Role))
+		c.Request = c.Request.WithContext(ctx)
 		c.Next()
 	})
 	router.PUT("/api/users/:id/reset-password", handler.ResetPassword)

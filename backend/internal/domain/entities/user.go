@@ -95,26 +95,25 @@ type LoginResponse struct {
 
 // CreateUserRequest represents a request to create a user
 type CreateUserRequest struct {
-	Username string `json:"username" validate:"required,alphanum,min=3,max=50"`
-	// Password must be at least 12 characters and contain at least one
-	// uppercase letter, one lowercase letter, and one digit.
-	Password string `json:"password" validate:"required,min=12,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	Username string    `json:"username" validate:"required,alphanum,min=3,max=50"`
+	Password string    `json:"password" validate:"required,min=6"`
+	Role     *UserRole `json:"role,omitempty" validate:"omitempty,oneof=admin user viewer"`
 }
 
 // UpdateUserRequest represents a request to update a user
 type UpdateUserRequest struct {
-	Role     *UserRole `json:"role,omitempty" validate:"omitempty,oneof=admin user viewer"`
-	Active   *bool     `json:"active,omitempty"`
+	Role     *UserRole      `json:"role,omitempty" validate:"omitempty,oneof=admin user viewer"`
+	Active   *bool          `json:"active,omitempty"`
 	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // ChangePasswordRequest represents a password change request
 type ChangePasswordRequest struct {
 	CurrentPassword string `json:"currentPassword" validate:"required"`
-	NewPassword     string `json:"newPassword" validate:"required,min=12,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	NewPassword     string `json:"newPassword" validate:"required,min=6"`
 }
 
 // ResetPasswordRequest represents a password reset request
 type ResetPasswordRequest struct {
-	NewPassword string `json:"newPassword" validate:"required,min=12,containsany=ABCDEFGHIJKLMNOPQRSTUVWXYZ,containsany=abcdefghijklmnopqrstuvwxyz,containsany=0123456789"`
+	NewPassword string `json:"newPassword" validate:"required,min=6"`
 }

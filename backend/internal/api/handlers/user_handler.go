@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"app-env-manager/internal/api/dto"
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"app-env-manager/internal/service/user"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // UserHandler handles user-related HTTP requests
@@ -262,11 +264,22 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 	})
 }
 
-// getCurrentUser gets the current authenticated user from context
+// getCurrentUser gets the current authenticated user from context.
+// It reads the user identity injected by MuxAuthMiddleware via ctxutil.
 func (h *UserHandler) getCurrentUser(c *gin.Context) *entities.User {
-	user, exists := c.Get("user")
-	if !exists {
+	userID, username := ctxutil.UserFromContext(c.Request.Context())
+	if userID == "" {
 		return nil
 	}
-	return user.(*entities.User)
+	objID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil
+	}
+	role := ctxutil.RoleFromContext(c.Request.Context())
+	return &entities.User{
+		ID:       objID,
+		Username: username,
+		Role:     entities.UserRole(role),
+		Active:   true,
+	}
 }
