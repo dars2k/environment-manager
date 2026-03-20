@@ -92,6 +92,7 @@ func main() {
 		sshManager,
 		healthChecker,
 		logService,
+		cfg.Security.AllowedHosts,
 	)
 
 	// Initialize WebSocket hub

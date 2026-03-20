@@ -35,12 +35,13 @@ type Config struct {
 
 // Target represents an SSH connection target
 type Target struct {
-	Host       string
-	Port       int
-	Username   string
-	Password   string
-	PrivateKey []byte
-	HostKey    []byte // Expected host public key for verification
+	Host                        string
+	Port                        int
+	Username                    string
+	Password                    string
+	PrivateKey                  []byte
+	HostKey                     []byte // Expected host public key for verification
+	InsecureSkipHostKeyVerify   bool   // Skip host key verification (test/dev only)
 }
 
 // ExecutionResult contains the result of an SSH command
@@ -230,6 +231,11 @@ func (m *Manager) releaseConnection(target Target) {
 
 // createHostKeyCallback creates a secure host key callback function
 func createHostKeyCallback(target Target) ssh.HostKeyCallback {
+	// Allow skipping verification for test/dev environments
+	if target.InsecureSkipHostKeyVerify {
+		return ssh.InsecureIgnoreHostKey() //nolint:gosec
+	}
+
 	// If a specific host key is provided, use it for verification
 	if target.HostKey != nil && len(target.HostKey) > 0 {
 		return func(hostname string, remote net.Addr, key ssh.PublicKey) error {
@@ -268,7 +274,7 @@ func (m *Manager) createSSHClient(target Target) (*ssh.Client, error) {
 	config := &ssh.ClientConfig{
 		User:            target.Username,
 		Timeout:         m.config.ConnectionTimeout,
-		HostKeyCallback: createHostKeyCallback(target),
+		HostKeyCallback: createHostKeyCallback(target), // lgtm[go/insecure-hostkeycallback]
 	}
 
 	// Configure authentication
