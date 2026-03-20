@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"app-env-manager/internal/api/dto"
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/domain/errors"
 	"app-env-manager/internal/repository/interfaces"
@@ -243,12 +244,15 @@ func (h *EnvironmentHandler) Restart(w http.ResponseWriter, r *http.Request) {
 		req = dto.RestartRequest{Force: false}
 	}
 
+	// Capture user identity before the goroutine (request context won't be available inside)
+	userID, username := ctxutil.UserFromContext(r.Context())
+
 	operationID := generateOperationID()
 
 	// Start operation asynchronously with a background context
 	go func() {
-		// Create a new context with timeout for the async operation
-		bgCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		// Create a new context with timeout and carry user identity into the async operation
+		bgCtx, cancel := context.WithTimeout(ctxutil.WithUser(context.Background(), userID, username), 5*time.Minute)
 		defer cancel()
 
 		h.logger.WithFields(logrus.Fields{
@@ -328,12 +332,15 @@ func (h *EnvironmentHandler) Upgrade(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Capture user identity before the goroutine (request context won't be available inside)
+	userID, username := ctxutil.UserFromContext(r.Context())
+
 	operationID := generateOperationID()
 
 	// Start operation asynchronously with a background context
 	go func() {
-		// Create a new context with timeout for the async operation
-		bgCtx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+		// Create a new context with timeout and carry user identity into the async operation
+		bgCtx, cancel := context.WithTimeout(ctxutil.WithUser(context.Background(), userID, username), 10*time.Minute)
 		defer cancel()
 
 		h.logger.WithFields(logrus.Fields{

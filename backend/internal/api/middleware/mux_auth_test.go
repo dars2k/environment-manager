@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"app-env-manager/internal/api/middleware"
+	"app-env-manager/internal/ctxutil"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -143,8 +144,8 @@ func TestMuxAuthMiddleware(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody:   "success",
 			checkContext: func(t *testing.T, r *http.Request) {
-				userID := r.Context().Value("userID")
-				assert.NotNil(t, userID)
+				userID, _ := ctxutil.UserFromContext(r.Context())
+				assert.NotEmpty(t, userID)
 				assert.Equal(t, "user-123", userID)
 			},
 		},
@@ -160,7 +161,7 @@ func TestMuxAuthMiddleware(t *testing.T) {
 			expectedStatus: http.StatusOK,
 			expectedBody:   "success",
 			checkContext: func(t *testing.T, r *http.Request) {
-				userID := r.Context().Value("userID")
+				userID, _ := ctxutil.UserFromContext(r.Context())
 				assert.Equal(t, "user-456", userID)
 			},
 		},
@@ -221,9 +222,9 @@ func TestMuxAuthMiddleware_Integration(t *testing.T) {
 	
 	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		executionOrder = append(executionOrder, "handler1")
-		userID := r.Context().Value("userID")
-		assert.NotNil(t, userID)
-		w.Write([]byte("Handler 1 executed for user: " + userID.(string)))
+		userID, _ := ctxutil.UserFromContext(r.Context())
+		assert.NotEmpty(t, userID)
+		w.Write([]byte("Handler 1 executed for user: " + userID))
 	})
 
 	// Create valid token
@@ -266,15 +267,16 @@ func TestMuxAuthMiddleware_ContextPropagation(t *testing.T) {
 
 	// Create nested handlers to test context propagation
 	innerHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID := r.Context().Value("userID")
-		assert.NotNil(t, userID)
+		userID, _ := ctxutil.UserFromContext(r.Context())
+		assert.NotEmpty(t, userID)
 		assert.Equal(t, "context-test-user", userID)
-		
+
 		// Try to add more context
 		ctx := context.WithValue(r.Context(), "extra", "value")
 		assert.Equal(t, "value", ctx.Value("extra"))
-		assert.Equal(t, "context-test-user", ctx.Value("userID"))
-		
+		innerUserID, _ := ctxutil.UserFromContext(ctx)
+		assert.Equal(t, "context-test-user", innerUserID)
+
 		w.WriteHeader(http.StatusOK)
 	})
 

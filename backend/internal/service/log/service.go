@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -54,14 +55,21 @@ func (s *Service) CleanupOldLogs(ctx context.Context, olderThan time.Duration) (
 	return s.logRepo.DeleteOld(ctx, olderThan)
 }
 
-// LogEnvironmentAction logs an environment-related action
+// LogEnvironmentAction logs an environment-related action, attributing it to the
+// user stored in ctx (if any).
 func (s *Service) LogEnvironmentAction(ctx context.Context, env *entities.Environment, action entities.ActionType, message string, details map[string]interface{}) error {
-	log := entities.NewLog(entities.LogTypeAction, entities.LogLevelInfo, message).
+	entry := entities.NewLog(entities.LogTypeAction, entities.LogLevelInfo, message).
 		WithEnvironment(env.ID, env.Name).
 		WithAction(action).
 		WithDetails(details)
-	
-	return s.Create(ctx, log)
+
+	if userID, username := ctxutil.UserFromContext(ctx); userID != "" {
+		if objID, err := primitive.ObjectIDFromHex(userID); err == nil {
+			entry = entry.WithUser(objID, username)
+		}
+	}
+
+	return s.Create(ctx, entry)
 }
 
 // LogHealthCheck logs a health check result

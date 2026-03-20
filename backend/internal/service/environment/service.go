@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/domain/errors"
 	"app-env-manager/internal/repository/interfaces"
@@ -1149,18 +1150,27 @@ func (s *Service) logEvent(ctx context.Context, env *entities.Environment, event
 // logEventWithPayload creates an audit log entry with payload
 func (s *Service) logEventWithPayload(ctx context.Context, env *entities.Environment, eventType entities.EventType,
 	severity entities.Severity, operation, message string, payload map[string]interface{}) {
-	
-	log := &entities.AuditLog{
-		Timestamp:      time.Now(),
-		EnvironmentID:  env.ID,
+
+	actor := entities.Actor{
+		Type: "system",
+		ID:   "system",
+		Name: "System",
+	}
+	if userID, username := ctxutil.UserFromContext(ctx); userID != "" {
+		actor = entities.Actor{
+			Type: "user",
+			ID:   userID,
+			Name: username,
+		}
+	}
+
+	entry := &entities.AuditLog{
+		Timestamp:       time.Now(),
+		EnvironmentID:   env.ID,
 		EnvironmentName: env.Name,
-		Type:           eventType,
-		Severity:       severity,
-		Actor: entities.Actor{
-			Type: "system", // TODO: Get from context
-			ID:   "system",
-			Name: "System",
-		},
+		Type:            eventType,
+		Severity:        severity,
+		Actor:           actor,
 		Action: entities.Action{
 			Operation: operation,
 			Status:    "completed",
@@ -1170,10 +1180,11 @@ func (s *Service) logEventWithPayload(ctx context.Context, env *entities.Environ
 		},
 	}
 
-	// Create audit log asynchronously
+	// Create audit log asynchronously, preserving user context
+	userID, username := ctxutil.UserFromContext(ctx)
 	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		bgCtx, cancel := context.WithTimeout(ctxutil.WithUser(context.Background(), userID, username), 5*time.Second)
 		defer cancel()
-		_ = s.auditRepo.Create(ctx, log)
+		_ = s.auditRepo.Create(bgCtx, entry)
 	}()
 }

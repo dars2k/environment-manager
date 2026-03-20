@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
+	"app-env-manager/internal/ctxutil"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -50,15 +50,16 @@ func MuxAuthMiddleware(jwtSecret string, logger *logrus.Logger) func(http.Handle
 				return
 			}
 
-			// Add user ID to context
+			// Extract user ID and username from token claims
 			userID, ok := claims["userId"].(string)
 			if !ok {
 				http.Error(w, "Invalid user ID in token", http.StatusUnauthorized)
 				return
 			}
+			username, _ := claims["username"].(string)
 
-			// Add to request context
-			ctx := context.WithValue(r.Context(), "userID", userID)
+			// Store user identity in request context
+			ctx := ctxutil.WithUser(r.Context(), userID, username)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
