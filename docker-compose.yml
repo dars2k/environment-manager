@@ -1,7 +1,7 @@
 services:
   # MongoDB Database
   mongodb:
-    image: mongo:8.0
+    image: mongo:8.2
     container_name: app-env-manager-db
     restart: unless-stopped
     environment:
