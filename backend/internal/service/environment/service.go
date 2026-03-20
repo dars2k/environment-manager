@@ -23,11 +23,12 @@ import (
 
 // Service handles environment business logic
 type Service struct {
-	repo         interfaces.EnvironmentRepository
-	auditRepo    interfaces.AuditLogRepository
-	sshManager   *ssh.Manager
+	repo          interfaces.EnvironmentRepository
+	auditRepo     interfaces.AuditLogRepository
+	sshManager    *ssh.Manager
 	healthChecker *health.Checker
-	logService   *log.Service
+	logService    *log.Service
+	allowedHosts  []string // hostnames exempt from SSRF checks
 }
 
 // NewService creates a new environment service
@@ -37,13 +38,15 @@ func NewService(
 	sshManager *ssh.Manager,
 	healthChecker *health.Checker,
 	logService *log.Service,
+	allowedHosts []string,
 ) *Service {
 	return &Service{
-		repo:         repo,
-		auditRepo:    auditRepo,
-		sshManager:   sshManager,
+		repo:          repo,
+		auditRepo:     auditRepo,
+		sshManager:    sshManager,
 		healthChecker: healthChecker,
-		logService:   logService,
+		logService:    logService,
+		allowedHosts:  allowedHosts,
 	}
 }
 
@@ -684,7 +687,7 @@ func (s *Service) GetAvailableVersions(ctx context.Context, id string) ([]string
 	}
 
 	// Validate the URL to prevent SSRF attacks
-	if err := validateURL(env.UpgradeConfig.VersionListURL); err != nil {
+	if err := s.validateURL(env.UpgradeConfig.VersionListURL); err != nil {
 		return nil, "", fmt.Errorf("invalid version list URL: %w", err)
 	}
 
@@ -694,7 +697,7 @@ func (s *Service) GetAvailableVersions(ctx context.Context, id string) ([]string
 		// Prevent following redirects to internal URLs
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			// Validate each redirect URL
-			if err := validateURL(req.URL.String()); err != nil {
+			if err := s.validateURL(req.URL.String()); err != nil {
 				return fmt.Errorf("redirect to invalid URL: %w", err)
 			}
 			// Limit redirect chain
@@ -912,8 +915,28 @@ func getJSONPath(data map[string]interface{}, path string) (interface{}, bool) {
 	return current, true
 }
 
-// validateURL validates a URL to prevent SSRF attacks
-func validateURL(rawURL string) error {
+// validateURL validates a URL to prevent SSRF attacks.
+// Hostnames listed in svc.allowedHosts bypass the private-IP check,
+// allowing Docker container names or internal hosts to be used.
+func (svc *Service) validateURL(rawURL string) error {
+	parsedURL, err := url.Parse(rawURL)
+	if err == nil {
+		hostname := strings.ToLower(parsedURL.Hostname())
+		for _, allowed := range svc.allowedHosts {
+			if strings.ToLower(strings.TrimSpace(allowed)) == hostname {
+				// Trusted host – only check scheme
+				if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+					return fmt.Errorf("only HTTP and HTTPS schemes are allowed")
+				}
+				return nil
+			}
+		}
+	}
+	return validateURLStrict(rawURL)
+}
+
+// validateURLStrict validates a URL to prevent SSRF attacks
+func validateURLStrict(rawURL string) error {
 	// Parse the URL
 	parsedURL, err := url.Parse(rawURL)
 	if err != nil {
@@ -990,7 +1013,7 @@ func (s *Service) executeHTTPCommand(ctx context.Context, cmd entities.CommandDe
 	}
 
 	// Validate URL to prevent SSRF
-	if err := validateURL(cmd.URL); err != nil {
+	if err := s.validateURL(cmd.URL); err != nil {
 		return fmt.Sprintf("URL validation failed: %v", err), false
 	}
 
@@ -1000,7 +1023,7 @@ func (s *Service) executeHTTPCommand(ctx context.Context, cmd entities.CommandDe
 		// Disable following redirects to prevent redirect-based SSRF
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			// Validate each redirect URL
-			if err := validateURL(req.URL.String()); err != nil {
+			if err := s.validateURL(req.URL.String()); err != nil {
 				return fmt.Errorf("redirect URL validation failed: %w", err)
 			}
 			// Limit redirect chain
@@ -1099,6 +1122,16 @@ func (s *Service) buildSSHTarget(env *entities.Environment) (*ssh.Target, error)
 		
 	default:
 		return nil, fmt.Errorf("unsupported credential type: %s", env.Credentials.Type)
+	}
+
+	// Allow skipping host key verification via metadata (for test/dev environments)
+	if env.Metadata != nil {
+		if skip, ok := env.Metadata["insecureSkipHostKeyVerification"].(bool); ok && skip {
+			target.InsecureSkipHostKeyVerify = true
+		}
+		if hostKey, ok := env.Metadata["hostKey"].(string); ok && hostKey != "" {
+			target.HostKey = []byte(hostKey)
+		}
 	}
 
 	return target, nil

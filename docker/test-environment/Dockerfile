@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Create SSH directory and set up SSH
-RUN mkdir /var/run/sshd
+RUN mkdir -p /var/run/sshd
 RUN echo 'root:testpassword' | chpasswd
 RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
 RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
@@ -19,10 +19,11 @@ RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so
 # Create test user
 RUN useradd -m -s /bin/bash testuser && echo 'testuser:testpass' | chpasswd
 
-# Copy health check server
+# Copy application files
 COPY health_server.py /app/health_server.py
 COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+COPY set_version.sh /app/set_version.sh
+RUN chmod +x /app/start.sh /app/set_version.sh
 
 # Expose ports
 EXPOSE 22 8080

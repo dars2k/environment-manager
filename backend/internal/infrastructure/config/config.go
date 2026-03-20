@@ -59,6 +59,7 @@ type SecurityConfig struct {
 	TokenExpiration   time.Duration `yaml:"tokenExpiration"`
 	BCryptCost        int           `yaml:"bcryptCost"`
 	AllowedOrigins    []string      `yaml:"allowedOrigins"`
+	AllowedHosts      []string      `yaml:"allowedHosts"` // Trusted hostnames exempt from SSRF checks (e.g. Docker containers)
 	RateLimitRequests int           `yaml:"rateLimitRequests"`
 	RateLimitWindow   time.Duration `yaml:"rateLimitWindow"`
 }
@@ -181,6 +182,18 @@ func (c *Config) applyEnvOverrides() {
 			}
 		}
 		c.Security.AllowedOrigins = cleaned
+	}
+
+	// Trusted hosts exempt from SSRF checks (comma-separated)
+	if hosts := os.Getenv("ALLOWED_HOSTS"); hosts != "" {
+		parts := strings.Split(hosts, ",")
+		cleaned := make([]string, 0, len(parts))
+		for _, p := range parts {
+			if s := strings.TrimSpace(p); s != "" {
+				cleaned = append(cleaned, s)
+			}
+		}
+		c.Security.AllowedHosts = cleaned
 	}
 }
 

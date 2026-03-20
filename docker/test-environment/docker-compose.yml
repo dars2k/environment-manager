@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   test-env-1:
     build: .
@@ -8,8 +6,8 @@ services:
     environment:
       APP_VERSION: "1.0.0"
     ports:
-      - "2221:22"
-      - "8001:8000"
+      - "2221:22"      # SSH port
+      - "8001:8080"    # Health check server port
     networks:
       - test-network
     restart: unless-stopped
@@ -21,8 +19,8 @@ services:
     environment:
       APP_VERSION: "2.0.0"
     ports:
-      - "2222:22"
-      - "8002:8000"
+      - "2222:22"      # SSH port
+      - "8002:8080"    # Health check server port
     networks:
       - test-network
     restart: unless-stopped

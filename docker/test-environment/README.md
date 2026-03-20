@@ -1,70 +1,259 @@
 # Test Environment for App Environment Manager
 
-This directory contains Docker containers that simulate test environments with SSH access and health check endpoints.
+Docker containers that simulate real environments with SSH access, health checks, and upgrade support.
 
-## Features
+## Credentials
 
-- SSH access with password authentication
-- Health check endpoints (`/health` and `/api/health`)
-- Ability to toggle health status for testing
-- Configurable response times
+| User       | Password      | Notes           |
+|------------|---------------|-----------------|
+| root       | testpassword  | Full root access |
+| testuser   | testpass      | Standard user   |
 
 ## Quick Start
 
-1. Start the test environments:
-   ```bash
-   cd docker/test-environment
-   docker-compose up -d
-   ```
-
-2. The test environments will be available at:
-   - **Test Environment 1**: 
-     - SSH: `localhost:2221` (user: `testuser`, password: `testpassword`)
-     - Health Check: `http://localhost:8001/health`
-   - **Test Environment 2**:
-     - SSH: `localhost:2222` (user: `testuser`, password: `testpassword`)
-     - Health Check: `http://localhost:8002/health`
-
-## Adding to App Environment Manager
-
-You can add these test environments to your App Environment Manager with the following configuration:
-
-### Test Environment 1
-- **Name**: Test Environment 1
-- **Host**: localhost (or your Docker host IP)
-- **Port**: 2221
-- **Username**: testuser
-- **Password**: testpassword
-- **Health Check Endpoint**: http://localhost:8001/health
-- **Health Check Method**: GET
-- **Expected Status Code**: 200
-
-### Test Environment 2
-- **Name**: Test Environment 2
-- **Host**: localhost (or your Docker host IP)
-- **Port**: 2222
-- **Username**: testuser
-- **Password**: testpassword
-- **Health Check Endpoint**: http://localhost:8002/health
-- **Health Check Method**: GET
-- **Expected Status Code**: 200
-
-## Testing Features
-
-### Toggle Health Status
 ```bash
-curl -X POST http://localhost:8001/toggle-health
+cd docker/test-environment
+docker compose up -d --build
 ```
 
-### Set Response Time
+Available after startup:
+
+| Container        | SSH Port | Health URL                     | Initial Version |
+|-----------------|----------|-------------------------------|-----------------|
+| test-environment-1 | 2221  | http://localhost:8001/health  | 1.0.0           |
+| test-environment-2 | 2222  | http://localhost:8002/health  | 2.0.0           |
+
+## HTTP Endpoints
+
+| Method | Path                | Description                            |
+|--------|---------------------|----------------------------------------|
+| GET    | /health             | Health status + current version        |
+| GET    | /version            | Current version + available versions   |
+| GET    | /info               | System information                     |
+| GET    | /metrics            | CPU, memory, disk stats                |
+| POST   | /restart            | Simulate service restart               |
+| POST   | /upgrade            | Upgrade to a version (updates version) |
+| POST   | /toggle-health      | Toggle healthy/unhealthy state         |
+| POST   | /set-response-time  | Set artificial response delay          |
+
+## Environment Configuration Examples
+
+### Minimal (SSH + Health Check)
+
+```json
+{
+  "name": "Test Environment 1",
+  "description": "Local test container with SSH",
+  "environmentURL": "http://localhost:8001",
+  "target": {
+    "host": "localhost",
+    "port": 2221
+  },
+  "credentials": {
+    "type": "password",
+    "username": "root"
+  },
+  "healthCheck": {
+    "enabled": true,
+    "endpoint": "/health",
+    "method": "GET",
+    "interval": 30,
+    "timeout": 10,
+    "validation": {
+      "type": "statusCode",
+      "value": 200
+    }
+  },
+  "commands": {
+    "type": "ssh",
+    "restart": {
+      "enabled": true,
+      "command": "echo 'service restarted'"
+    }
+  },
+  "metadata": {
+    "password": "testpassword"
+  }
+}
+```
+
+### Full Configuration (All Available Options)
+
+```json
+{
+  "name": "Test Environment 1 Full",
+  "description": "Full-featured test environment with upgrade support",
+  "environmentURL": "http://localhost:8001",
+  "target": {
+    "host": "localhost",
+    "port": 2221,
+    "domain": "test-env-1.local"
+  },
+  "credentials": {
+    "type": "password",
+    "username": "root"
+  },
+  "healthCheck": {
+    "enabled": true,
+    "endpoint": "http://localhost:8001/health",
+    "method": "GET",
+    "interval": 30,
+    "timeout": 10,
+    "validation": {
+      "type": "jsonRegex",
+      "value": "\"status\":\"healthy\""
+    },
+    "headers": {
+      "Accept": "application/json"
+    }
+  },
+  "commands": {
+    "type": "ssh",
+    "restart": {
+      "enabled": true,
+      "command": "echo 'restarting service'"
+    }
+  },
+  "upgradeConfig": {
+    "enabled": true,
+    "type": "ssh",
+    "versionListURL": "http://localhost:8001/version",
+    "versionListMethod": "GET",
+    "jsonPathResponse": "available",
+    "upgradeCommand": {
+      "command": "echo {VERSION} > /tmp/app_version"
+    }
+  },
+  "metadata": {
+    "password": "testpassword"
+  }
+}
+```
+
+### SSH Key Authentication Example
+
+```json
+{
+  "name": "Test Environment Key Auth",
+  "target": {
+    "host": "localhost",
+    "port": 2221
+  },
+  "credentials": {
+    "type": "key",
+    "username": "root",
+    "keyId": "<SSH_KEY_OBJECT_ID>"
+  },
+  "commands": {
+    "type": "ssh",
+    "restart": {
+      "enabled": true,
+      "command": "echo 'restarted'"
+    }
+  }
+}
+```
+
+### HTTP Command Type (no SSH needed)
+
+```json
+{
+  "name": "Test Environment HTTP",
+  "environmentURL": "http://localhost:8001",
+  "target": {
+    "host": "localhost",
+    "port": 8001
+  },
+  "credentials": {
+    "type": "password",
+    "username": "testuser"
+  },
+  "healthCheck": {
+    "enabled": true,
+    "endpoint": "/health",
+    "method": "GET",
+    "interval": 60,
+    "timeout": 5,
+    "validation": {
+      "type": "statusCode",
+      "value": 200
+    }
+  },
+  "commands": {
+    "type": "http",
+    "restart": {
+      "enabled": true,
+      "url": "http://localhost:8001/restart",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {}
+    }
+  },
+  "upgradeConfig": {
+    "enabled": true,
+    "type": "http",
+    "versionListURL": "http://localhost:8001/version",
+    "versionListMethod": "GET",
+    "jsonPathResponse": "available",
+    "upgradeCommand": {
+      "url": "http://localhost:8001/upgrade",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "version": "{VERSION}"
+      }
+    }
+  }
+}
+```
+
+## Testing Scenarios
+
+### Check health status
+```bash
+curl http://localhost:8001/health
+```
+
+### Get available versions
+```bash
+curl http://localhost:8001/version
+```
+
+### Simulate upgrade via SSH
+```bash
+ssh root@localhost -p 2221 "echo 1.1.0 > /tmp/app_version"
+curl http://localhost:8001/health   # version should now show 1.1.0
+```
+
+### Simulate upgrade via HTTP
+```bash
+curl -X POST http://localhost:8001/upgrade \
+  -H "Content-Type: application/json" \
+  -d '{"version": "2.0.0"}'
+curl http://localhost:8001/health   # version should now show 2.0.0
+```
+
+### Toggle unhealthy state (for testing alerts)
+```bash
+curl -X POST http://localhost:8001/toggle-health
+curl http://localhost:8001/health   # returns 503
+curl -X POST http://localhost:8001/toggle-health   # toggle back
+```
+
+### Simulate slow response
 ```bash
 curl -X POST http://localhost:8001/set-response-time \
   -H "Content-Type: application/json" \
-  -d '{"ms": 500}'
+  -d '{"ms": 2000}'
 ```
 
-## Stopping Test Environments
+## Stopping
 
 ```bash
 cd docker/test-environment
-docker-compose down
+docker compose down
+```

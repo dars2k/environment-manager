@@ -44,6 +44,8 @@ services:
       
       # CORS Configuration
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost}
+      # Trusted hostnames exempt from SSRF checks (e.g. Docker container names)
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-}
     volumes:
       - ./backend/config:/app/config:ro
       - backend_logs:/app/logs
