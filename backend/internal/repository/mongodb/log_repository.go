@@ -58,24 +58,15 @@ func (r *logRepository) List(ctx context.Context, filter interfaces.LogFilter) (
 	}
 	
 	if filter.Type != "" {
-		// Validate type is a string to prevent injection
-		if _, ok := interface{}(filter.Type).(string); ok {
-			query["type"] = filter.Type
-		}
+		query["type"] = filter.Type
 	}
-	
+
 	if filter.Level != "" {
-		// Validate level is a string to prevent injection
-		if _, ok := interface{}(filter.Level).(string); ok {
-			query["level"] = filter.Level
-		}
+		query["level"] = filter.Level
 	}
-	
+
 	if filter.Action != "" {
-		// Validate action is a string to prevent injection
-		if _, ok := interface{}(filter.Action).(string); ok {
-			query["action"] = filter.Action
-		}
+		query["action"] = filter.Action
 	}
 	
 	if !filter.StartTime.IsZero() || !filter.EndTime.IsZero() {
@@ -189,24 +180,15 @@ func (r *logRepository) Count(ctx context.Context, filter interfaces.LogFilter) 
 	}
 	
 	if filter.Type != "" {
-		// Validate type is a string to prevent injection
-		if _, ok := interface{}(filter.Type).(string); ok {
-			query["type"] = filter.Type
-		}
+		query["type"] = filter.Type
 	}
-	
+
 	if filter.Level != "" {
-		// Validate level is a string to prevent injection
-		if _, ok := interface{}(filter.Level).(string); ok {
-			query["level"] = filter.Level
-		}
+		query["level"] = filter.Level
 	}
-	
+
 	if filter.Action != "" {
-		// Validate action is a string to prevent injection
-		if _, ok := interface{}(filter.Action).(string); ok {
-			query["action"] = filter.Action
-		}
+		query["action"] = filter.Action
 	}
 	
 	if !filter.StartTime.IsZero() || !filter.EndTime.IsZero() {
