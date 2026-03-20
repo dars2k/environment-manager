@@ -327,18 +327,24 @@ export const EnvironmentCard: React.FC<EnvironmentCardProps> = ({ environment })
         </MenuItem>
       </Menu>
 
-      <UpgradeEnvironmentDialog
-        open={upgradeDialogOpen}
-        onClose={() => setUpgradeDialogOpen(false)}
-        environment={environment}
-        onUpgrade={(version) => upgrade(environment.id, version)}
-      />
-      <RestartEnvironmentDialog
-        open={restartDialogOpen}
-        onClose={() => setRestartDialogOpen(false)}
-        environment={environment}
-        onRestart={(force) => restart(environment.id, force)}
-      />
+      {/* Dialogs are children in React's tree but render in a Portal.
+          stopPropagation here prevents clicks inside the dialogs (including
+          Autocomplete poppers) from bubbling through the React tree to the
+          Card's onClick → navigate handler. */}
+      <div onClick={(e) => e.stopPropagation()}>
+        <UpgradeEnvironmentDialog
+          open={upgradeDialogOpen}
+          onClose={() => setUpgradeDialogOpen(false)}
+          environment={environment}
+          onUpgrade={(version) => upgrade(environment.id, version)}
+        />
+        <RestartEnvironmentDialog
+          open={restartDialogOpen}
+          onClose={() => setRestartDialogOpen(false)}
+          environment={environment}
+          onRestart={(force) => restart(environment.id, force)}
+        />
+      </div>
     </Card>
   );
 };

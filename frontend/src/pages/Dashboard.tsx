@@ -68,7 +68,6 @@ const StatCard: React.FC<StatCardProps> = ({ value, label, icon, color }) => (
         justifyContent: 'center',
         bgcolor: alpha(color, 0.12),
         color,
-        boxShadow: `0 0 16px ${alpha(color, 0.25)}`,
         flexShrink: 0,
       }}
     >
