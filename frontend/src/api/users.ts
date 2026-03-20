@@ -20,6 +20,7 @@ export interface User {
 export interface CreateUserRequest {
   username: string;
   password: string;
+  role?: UserRole;
 }
 
 export interface UpdateUserRequest {
