@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"app-env-manager/internal/ctxutil"
 	"app-env-manager/internal/domain/entities"
 	"app-env-manager/internal/repository/interfaces"
 	"app-env-manager/internal/service/log"
@@ -572,5 +573,23 @@ func TestService_LogAuth_WithUserDetails(t *testing.T) {
 			*log.UserID == userID &&
 			log.Username == username
 	}))
+	mockRepo.AssertExpectations(t)
+}
+
+func TestService_LogEnvironmentAction_WithUserContext(t *testing.T) {
+	mockRepo := new(MockLogRepository)
+	service := log.NewService(mockRepo)
+
+	userID := primitive.NewObjectID()
+	ctx := ctxutil.WithUser(context.Background(), userID.Hex(), "contextuser")
+	env := &entities.Environment{
+		ID:   primitive.NewObjectID(),
+		Name: "env-with-user",
+	}
+
+	mockRepo.On("Create", ctx, mock.AnythingOfType("*entities.Log")).Return(nil)
+
+	err := service.LogEnvironmentAction(ctx, env, entities.ActionTypeCreate, "created", nil)
+	assert.NoError(t, err)
 	mockRepo.AssertExpectations(t)
 }

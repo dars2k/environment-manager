@@ -463,3 +463,49 @@ func BenchmarkValidate(b *testing.B) {
 		_ = cfg.Validate()
 	}
 }
+
+func TestLoad_ServerPortEnvOverride(t *testing.T) {
+	os.Setenv("SERVER_PORT", "9999")
+	os.Setenv("JWT_SECRET", "test-jwt-secret")
+	os.Setenv("SSH_KEY_ENCRYPTION_KEY", "12345678901234567890123456789012")
+	defer func() {
+		os.Unsetenv("SERVER_PORT")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("SSH_KEY_ENCRYPTION_KEY")
+	}()
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+	assert.Equal(t, 9999, cfg.Server.Port)
+}
+
+func TestLoad_ServerPortInvalidEnv(t *testing.T) {
+	os.Setenv("SERVER_PORT", "not-a-number")
+	os.Setenv("JWT_SECRET", "test-jwt-secret")
+	os.Setenv("SSH_KEY_ENCRYPTION_KEY", "12345678901234567890123456789012")
+	defer func() {
+		os.Unsetenv("SERVER_PORT")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("SSH_KEY_ENCRYPTION_KEY")
+	}()
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+	// Invalid port string – defaults should remain
+	assert.Equal(t, 8080, cfg.Server.Port)
+}
+
+func TestLoad_AllowedHostsEnvOverride(t *testing.T) {
+	os.Setenv("ALLOWED_HOSTS", "host1.local, host2.local, ")
+	os.Setenv("JWT_SECRET", "test-jwt-secret")
+	os.Setenv("SSH_KEY_ENCRYPTION_KEY", "12345678901234567890123456789012")
+	defer func() {
+		os.Unsetenv("ALLOWED_HOSTS")
+		os.Unsetenv("JWT_SECRET")
+		os.Unsetenv("SSH_KEY_ENCRYPTION_KEY")
+	}()
+
+	cfg, err := config.Load("")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"host1.local", "host2.local"}, cfg.Security.AllowedHosts)
+}

@@ -45,6 +45,14 @@ func TestUser_UpdatePassword(t *testing.T) {
 	assert.False(t, user.CheckPassword("password123"))
 }
 
+func TestUser_UpdatePassword_Succeeds(t *testing.T) {
+	user, err := NewUser("testuser", "pass")
+	assert.NoError(t, err)
+	err = user.UpdatePassword("newpass")
+	assert.NoError(t, err)
+	assert.True(t, user.CheckPassword("newpass"))
+}
+
 func TestUser_Permissions(t *testing.T) {
 	tests := []struct {
 		name               string

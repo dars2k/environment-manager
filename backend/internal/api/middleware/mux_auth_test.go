@@ -386,3 +386,61 @@ func TestMuxAuthMiddleware_AlgorithmValidation(t *testing.T) {
 		})
 	}
 }
+
+func TestRequireAdmin(t *testing.T) {
+	jwtSecret := "admin-test-secret"
+	logger := logrus.New()
+	logger.SetOutput(nil)
+
+	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("admin ok"))
+	})
+
+	tests := []struct {
+		name           string
+		role           string
+		expectedStatus int
+	}{
+		{
+			name:           "Admin role is allowed",
+			role:           "admin",
+			expectedStatus: http.StatusOK,
+		},
+		{
+			name:           "Non-admin role is forbidden",
+			role:           "user",
+			expectedStatus: http.StatusForbidden,
+		},
+		{
+			name:           "Empty role is forbidden",
+			role:           "",
+			expectedStatus: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Build a token with the given role
+			token, err := createTestToken(jwt.MapClaims{
+				"userId":   "u1",
+				"username": "testuser",
+				"role":     tt.role,
+				"exp":      time.Now().Add(time.Hour).Unix(),
+			}, jwtSecret)
+			assert.NoError(t, err)
+
+			// Chain: auth middleware -> RequireAdmin -> handler
+			authMiddleware := middleware.MuxAuthMiddleware(jwtSecret, logger)
+			chain := authMiddleware(middleware.RequireAdmin(okHandler))
+
+			req := httptest.NewRequest("GET", "/admin", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+			w := httptest.NewRecorder()
+
+			chain.ServeHTTP(w, req)
+
+			assert.Equal(t, tt.expectedStatus, w.Code)
+		})
+	}
+}
