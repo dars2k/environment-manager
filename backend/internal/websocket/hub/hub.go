@@ -25,6 +25,7 @@ type Client struct {
 	conn          *websocket.Conn
 	send          chan Message
 	subscriptions map[string]bool
+	subMu         sync.RWMutex
 	hub           *Hub
 	logger        *logrus.Logger
 }
@@ -254,9 +255,11 @@ func (c *Client) handleSubscribe(payload map[string]interface{}) {
 		return
 	}
 
+	c.subMu.Lock()
 	for _, envID := range sub.Environments {
 		c.subscriptions[envID] = true
 	}
+	c.subMu.Unlock()
 
 	c.logger.WithFields(logrus.Fields{
 		"clientId":     c.ID,
@@ -286,9 +289,11 @@ func (c *Client) handleUnsubscribe(payload map[string]interface{}) {
 		return
 	}
 
+	c.subMu.Lock()
 	for _, envID := range unsub.Environments {
 		delete(c.subscriptions, envID)
 	}
+	c.subMu.Unlock()
 
 	c.logger.WithFields(logrus.Fields{
 		"clientId":     c.ID,
@@ -306,5 +311,7 @@ func (c *Client) handleUnsubscribe(payload map[string]interface{}) {
 
 // IsSubscribedTo checks if the client is subscribed to an environment
 func (c *Client) IsSubscribedTo(envID string) bool {
+	c.subMu.RLock()
+	defer c.subMu.RUnlock()
 	return c.subscriptions[envID]
 }
