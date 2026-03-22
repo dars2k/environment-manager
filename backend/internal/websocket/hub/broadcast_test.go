@@ -27,26 +27,32 @@ func newHubAndClient(t *testing.T, clientID string) (*hub.Hub, *hub.Client, *web
 	h := hub.NewHub(logger)
 	go h.Run()
 
-	var hubClient *hub.Client
+	// Use a channel to safely pass the client from the handler goroutine to the test.
+	clientCh := make(chan *hub.Client, 1)
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 		conn, err := up.Upgrade(w, r, nil)
 		require.NoError(t, err)
 
-		hubClient = hub.NewClient(clientID, conn, h, logger)
-		h.RegisterClient(hubClient)
-		go hubClient.ReadPump()
-		go hubClient.WritePump()
-		// ReadPump and WritePump own the conn; do not read from it here
+		c := hub.NewClient(clientID, conn, h, logger)
+		h.RegisterClient(c)
+		go c.ReadPump()
+		go c.WritePump()
+		clientCh <- c
 	}))
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)
 
-	// Give the server goroutine time to register the client
-	time.Sleep(60 * time.Millisecond)
+	// Wait for the handler goroutine to send the client.
+	var hubClient *hub.Client
+	select {
+	case hubClient = <-clientCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for hub client to be created")
+	}
 
 	cleanup := func() {
 		dialConn.Close()

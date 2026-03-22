@@ -146,29 +146,37 @@ func TestSendStatusUpdate_Subscribed(t *testing.T) {
 func newTestWSPair(t *testing.T, hub Hub) (*Client, *websocket.Conn, func()) {
 	t.Helper()
 
-	var serverConn *websocket.Conn
+	// Use a channel to safely pass serverConn from the handler goroutine to the test.
+	connCh := make(chan *websocket.Conn, 1)
 	up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
 
+	// done is closed once the test-side ReadPump has finished with the connection.
+	done := make(chan struct{})
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := up.Upgrade(w, r, nil)
 		require.NoError(t, err)
-		serverConn = conn
-		// keep the handler alive
-		for {
-			if _, _, err := conn.ReadMessage(); err != nil {
-				break
-			}
-		}
+		// Transfer ownership to the test; the handler must not read from conn
+		// anymore — ReadPump (started by the test) owns the read side.
+		connCh <- conn
+		// Block until the test is done so the server stays alive.
+		<-done
 	}))
 
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
 	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
 	require.NoError(t, err)
 
-	time.Sleep(30 * time.Millisecond)
+	var serverConn *websocket.Conn
+	select {
+	case serverConn = <-connCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for server WebSocket connection")
+	}
+
 	c := NewClient("test", hub, serverConn)
 
 	cleanup := func() {
+		close(done)
 		dialConn.Close()
 		srv.Close()
 	}

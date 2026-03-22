@@ -157,40 +157,60 @@ func main() {
 	logger.Info("Server exiting")
 }
 
-// startHealthCheckScheduler runs periodic health checks on all environments
-func startHealthCheckScheduler(service *environment.Service, interval time.Duration, logger *logrus.Logger) {
-	ticker := time.NewTicker(interval)
+// startHealthCheckScheduler runs periodic health checks on all environments,
+// respecting each environment's individual health check interval setting.
+func startHealthCheckScheduler(service *environment.Service, defaultInterval time.Duration, logger *logrus.Logger) {
+	// Poll frequently; actual per-environment cadence is controlled by lastChecked tracking.
+	pollInterval := 5 * time.Second
+	if defaultInterval < pollInterval {
+		pollInterval = defaultInterval
+	}
+	ticker := time.NewTicker(pollInterval)
 	defer ticker.Stop()
 
-	for {
-		select {
-		case <-ticker.C:
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			
-			// Get all environments
-			envs, err := service.ListEnvironments(ctx, interfaces.ListFilter{})
-			if err != nil {
-				logger.WithError(err).Error("Failed to list environments for health check")
-				cancel()
+	lastChecked := make(map[string]time.Time)
+
+	for range ticker.C {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+
+		envs, err := service.ListEnvironments(ctx, interfaces.ListFilter{})
+		if err != nil {
+			logger.WithError(err).Error("Failed to list environments for health check")
+			cancel()
+			continue
+		}
+
+		now := time.Now()
+		for _, env := range envs {
+			if !env.HealthCheck.Enabled {
 				continue
 			}
 
-			// Check health for each environment
-			for _, env := range envs {
-				go func(envID string) {
-					ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-					defer cancel()
-					
-					if err := service.CheckHealth(ctx, envID); err != nil {
-						logger.WithFields(logrus.Fields{
-							"environmentId": envID,
-							"error":         err,
-						}).Error("Health check failed")
-					}
-				}(env.ID.Hex())
+			// Determine this environment's interval (fall back to global default).
+			interval := defaultInterval
+			if env.HealthCheck.Interval > 0 {
+				interval = time.Duration(env.HealthCheck.Interval) * time.Second
 			}
-			
-			cancel()
+
+			envID := env.ID.Hex()
+			if t, ok := lastChecked[envID]; ok && now.Sub(t) < interval {
+				continue // not due yet
+			}
+			lastChecked[envID] = now
+
+			go func(id string) {
+				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+				defer cancel()
+
+				if err := service.CheckHealth(ctx, id); err != nil {
+					logger.WithFields(logrus.Fields{
+						"environmentId": id,
+						"error":         err,
+					}).Error("Health check failed")
+				}
+			}(envID)
 		}
+
+		cancel()
 	}
 }
