@@ -2,6 +2,9 @@
 
 A modern, full-stack application for managing deployment environments with real-time monitoring, SSH-based operations, role-based access control, and comprehensive audit logging.
 
+[![CI/CD Pipeline](https://github.com/dars2k/environment-manager/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/dars2k/environment-manager/actions/workflows/ci-cd.yml)
+![Backend Coverage](https://img.shields.io/badge/Backend%20Coverage-89%25-yellow)
+![Frontend Coverage](https://img.shields.io/badge/Frontend%20Coverage-92%25-brightgreen)
 ![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb)
