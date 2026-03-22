@@ -18,6 +18,7 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData.ts',
         'src/main.tsx',
+        'dist/**',
       ],
     },
   },

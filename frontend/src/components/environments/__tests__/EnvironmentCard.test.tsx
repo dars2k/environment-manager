@@ -166,11 +166,42 @@ describe('EnvironmentCard', () => {
       ...mockEnvironment,
       description: 'This is a very long description that should be truncated to fit within the card limits. '.repeat(5),
     };
-    
+
     render(<EnvironmentCard environment={longDescriptionEnv} />);
-    
+
     const description = screen.getByText(/This is a very long description/);
     const styles = window.getComputedStyle(description);
     expect(styles.overflow).toBe('hidden');
+  });
+
+  it('shows upgrade option as disabled when upgrade not configured', async () => {
+    const user = userEvent.setup();
+    const envNoUpgrade = {
+      ...mockEnvironment,
+      upgradeConfig: { ...mockEnvironment.upgradeConfig, enabled: false, versionListURL: '' },
+    };
+    render(<EnvironmentCard environment={envNoUpgrade} />);
+    const moreButton = screen.getByTestId('MoreVertIcon').parentElement as HTMLElement;
+    await user.click(moreButton);
+    await waitFor(() => {
+      const upgradeItem = screen.getByText(/upgrade/i).closest('li');
+      expect(upgradeItem).toHaveAttribute('aria-disabled', 'true');
+    });
+  });
+
+  it('opens restart dialog when restart is configured', async () => {
+    const user = userEvent.setup();
+    render(<EnvironmentCard environment={mockEnvironment} />);
+    const moreButton = screen.getByTestId('MoreVertIcon').parentElement as HTMLElement;
+    await user.click(moreButton);
+    await waitFor(() => {
+      expect(screen.getByText(/restart/i)).toBeInTheDocument();
+    });
+    // Click restart menu item
+    const restartOption = screen.getByText(/^restart$/i);
+    await user.click(restartOption);
+    await waitFor(() => {
+      expect(screen.getByText('Restart Environment')).toBeInTheDocument();
+    });
   });
 });
