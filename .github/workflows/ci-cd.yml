@@ -46,12 +46,19 @@ jobs:
         working-directory: ./backend
         run: go test -v -race -coverprofile=coverage.out ./...
 
-      - name: Upload coverage
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage
           path: backend/coverage.out
           retention-days: 1
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.out
+          flags: backend
+          fail_ci_if_error: false
 
   test-frontend:
     name: Test Frontend
@@ -78,12 +85,19 @@ jobs:
         working-directory: ./frontend
         run: npm test -- --coverage
 
-      - name: Upload coverage
+      - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
           path: frontend/coverage/
           retention-days: 1
+
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: false
 
   build-and-push:
     name: Build and Push Docker Images
