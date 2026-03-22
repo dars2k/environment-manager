@@ -79,7 +79,7 @@ If a workflow fails:
 
 ## Requirements
 
-- Go 1.23+
-- Node.js 20+
+- Go 1.26+
+- Node.js 22+
 - Docker and Docker Compose
 - GitHub repository with Actions enabled

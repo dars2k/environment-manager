@@ -4,9 +4,9 @@
 This is a full-stack application environment manager with Go backend and React frontend. It provides environment management, real-time monitoring, SSH operations, and comprehensive audit logging.
 
 ## Architecture
-- **Backend**: Go 1.23+ with clean architecture (Gorilla Mux, MongoDB, WebSocket)
+- **Backend**: Go 1.26 with clean architecture (Gorilla Mux, MongoDB, WebSocket)
 - **Frontend**: React 18 + TypeScript + Redux Toolkit + Material-UI + Vite
-- **Database**: MongoDB 7.0
+- **Database**: MongoDB 8.2
 - **Deployment**: Docker Compose
 
 ## Development Commands

@@ -29,7 +29,7 @@ make health
 
 | Service | Description | Default port |
 |---------|-------------|-------------|
-| `mongodb` | MongoDB 7.0 database | 27017 |
+| `mongodb` | MongoDB 8.2 database | 27017 |
 | `backend` | Go API server with WebSocket support | 8080 |
 | `frontend` | React app served by Nginx | 80 |
 | `mongo-express` | MongoDB admin UI (debug profile only) | 8081 |

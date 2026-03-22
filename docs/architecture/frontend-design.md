@@ -60,11 +60,11 @@ frontend/
 |-----------|---------|---------|
 | React | 18 | UI framework |
 | TypeScript | 5 | Type safety |
-| Redux Toolkit | latest | Global state management |
+| Redux Toolkit | 1.9 | Global state management |
 | Material-UI | v5 | UI component library |
 | React Router | v6 | Client-side routing |
-| Vite | latest | Build tool and dev server |
-| Axios | latest | HTTP client |
+| Vite | 7 | Build tool and dev server |
+| Axios | 1.13 | HTTP client |
 | Native WebSocket | — | Real-time updates |
 
 ## State Management

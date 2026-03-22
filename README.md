@@ -7,7 +7,7 @@ A modern, full-stack application for managing deployment environments with real-
 [![Frontend Coverage](https://codecov.io/gh/dars2k/environment-manager/branch/master/graph/badge.svg?flag=frontend)](https://codecov.io/gh/dars2k/environment-manager)
 ![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
-![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?logo=mongodb)
+![MongoDB](https://img.shields.io/badge/MongoDB-8.2-47A248?logo=mongodb)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ## Features
@@ -27,7 +27,7 @@ A modern, full-stack application for managing deployment environments with real-
 |-------|-----------|
 | Frontend | React 18 + TypeScript + Redux Toolkit + Material-UI + Vite |
 | Backend | Go 1.26 + Gorilla Mux (Clean Architecture) |
-| Database | MongoDB 7.0 |
+| Database | MongoDB 8.2 |
 | Real-time | WebSocket (Gorilla WebSocket) |
 | Deployment | Docker Compose |
 
@@ -105,14 +105,14 @@ docker-compose up -d
 
 ## Manual Setup (without Docker)
 
-**Prerequisites:** Go 1.26+, Node.js 22+, MongoDB 7.0+
+**Prerequisites:** Go 1.26+, Node.js 22+, MongoDB 8.2+
 
 ```bash
 # Start MongoDB
 docker run -d -p 27017:27017 --name env-manager-mongo \
   -e MONGO_INITDB_ROOT_USERNAME=admin \
   -e MONGO_INITDB_ROOT_PASSWORD=admin123 \
-  mongo:7.0
+  mongo:8.2
 
 # Run backend
 cd backend

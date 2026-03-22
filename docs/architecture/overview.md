@@ -139,9 +139,9 @@ UI Form → API Request → JWT Validation → RequireAdmin → Service → Repo
 | Technology | Version | Purpose |
 |-----------|---------|---------|
 | Go | 1.26 | Language |
-| Gorilla Mux | latest | HTTP router |
-| Gorilla WebSocket | latest | WebSocket server |
-| MongoDB driver | latest | Database |
+| Gorilla Mux | 1.8.1 | HTTP router |
+| Gorilla WebSocket | 1.5.3 | WebSocket server |
+| MongoDB driver | 1.17 | Database |
 | Logrus | latest | Structured logging |
 | golang.org/x/crypto | latest | SSH + bcrypt |
 | golang-jwt/jwt | v5 | JWT tokens |
@@ -152,11 +152,11 @@ UI Form → API Request → JWT Validation → RequireAdmin → Service → Repo
 |-----------|---------|---------|
 | React | 18 | UI framework |
 | TypeScript | 5 | Type safety |
-| Redux Toolkit | latest | State management |
+| Redux Toolkit | 1.9 | State management |
 | Material-UI | v5 | UI component library |
 | React Router | v6 | Client-side routing |
-| Axios | latest | HTTP client |
-| Vite | latest | Build tool |
+| Axios | 1.13 | HTTP client |
+| Vite | 7 | Build tool |
 
 ### Infrastructure
 
@@ -164,4 +164,4 @@ UI Form → API Request → JWT Validation → RequireAdmin → Service → Repo
 |-----------|---------|
 | Docker Compose | Local orchestration |
 | Nginx | Reverse proxy and static file serving |
-| MongoDB 7.0 | Primary database |
+| MongoDB 8.2 | Primary database |

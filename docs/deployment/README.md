@@ -23,7 +23,7 @@ This guide covers deployment strategies for the Environment Manager in productio
           └────────────┬────────────┘
                        │
           ┌────────────┴────────────┐
-          │     MongoDB 7.0         │
+          │     MongoDB 8.2         │
           │  (Replica Set / Atlas)  │
           └─────────────────────────┘
 ```
@@ -352,7 +352,7 @@ spec:
     spec:
       containers:
       - name: mongodb
-        image: mongo:7.0
+        image: mongo:8.2
         command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
         ports:
         - containerPort: 27017
