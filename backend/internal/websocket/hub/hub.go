@@ -131,8 +131,8 @@ func (h *Hub) unregisterClient(client *Client) {
 
 // broadcastToSubscribers sends message to subscribed clients
 func (h *Hub) broadcastToSubscribers(message Message) {
-	h.mu.RLock()
-	defer h.mu.RUnlock()
+	h.mu.Lock()
+	defer h.mu.Unlock()
 
 	// Extract environment ID if present
 	envID, ok := message.Payload["environmentId"].(string)

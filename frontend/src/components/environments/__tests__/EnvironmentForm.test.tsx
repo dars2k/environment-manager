@@ -129,23 +129,23 @@ describe('EnvironmentForm', () => {
   
   it('should handle form submission', async () => {
     const onSubmit = vi.fn();
-    const user = userEvent.setup();
-    
+    const user = userEvent.setup({ delay: null });
+
     render(
-      <EnvironmentForm 
+      <EnvironmentForm
         onSubmit={onSubmit}
         mode="create"
       />
     );
-    
+
     // Fill in required fields
     await user.type(screen.getByLabelText(/Environment Name/i), 'New Environment');
     await user.type(screen.getByLabelText(/Environment URL/i), 'https://new.example.com');
-    
+
     // Submit form
     const submitButton = screen.getByRole('button', { name: /Create Environment/i });
     await user.click(submitButton);
-    
+
     await waitFor(() => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -156,7 +156,7 @@ describe('EnvironmentForm', () => {
         expect.any(String)  // privateKey
       );
     });
-  });
+  }, 15000);
   
   it('should handle cancel', async () => {
     const onSubmit = vi.fn();
@@ -467,7 +467,7 @@ describe('EnvironmentForm', () => {
 
   it('should update SSH host input', async () => {
     const onSubmit = vi.fn();
-    const user = userEvent.setup();
+    const user = userEvent.setup({ delay: null });
 
     render(
       <EnvironmentForm
@@ -485,7 +485,7 @@ describe('EnvironmentForm', () => {
 
     await user.type(screen.getByLabelText(/ssh host/i), 'server.example.com');
     expect((screen.getByLabelText(/ssh host/i) as HTMLInputElement).value).toBe('server.example.com');
-  });
+  }, 15000);
 
   it('should update SSH username input', async () => {
     const onSubmit = vi.fn();

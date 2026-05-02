@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -69,37 +70,34 @@ func (m *MongoDB) CreateIndexes(ctx context.Context) error {
 	envCollection := m.Collection("environments")
 	envIndexes := []mongo.IndexModel{
 		{
-			Keys:    map[string]interface{}{"name": 1},
+			Keys:    bson.D{{Key: "name", Value: 1}},
 			Options: options.Index().SetUnique(true),
 		},
 		{
-			Keys: map[string]interface{}{"status.health": 1},
+			Keys: bson.D{{Key: "status.health", Value: 1}},
 		},
 		{
-			Keys: map[string]interface{}{"timestamps.lastCheck": 1},
+			Keys: bson.D{{Key: "timestamps.lastCheck", Value: 1}},
 		},
 	}
 	if _, err := envCollection.Indexes().CreateMany(ctx, envIndexes); err != nil {
 		return fmt.Errorf("failed to create environment indexes: %w", err)
 	}
 
-	// Audit log indexes
+	// Audit log indexes — bson.D preserves key order for compound indexes.
 	auditCollection := m.Collection("audit_log")
 	auditIndexes := []mongo.IndexModel{
 		{
-			Keys: map[string]interface{}{
-				"timestamp":     -1,
-				"environmentId": 1,
-			},
+			Keys: bson.D{{Key: "timestamp", Value: -1}, {Key: "environmentId", Value: 1}},
 		},
 		{
-			Keys: map[string]interface{}{"type": 1},
+			Keys: bson.D{{Key: "type", Value: 1}},
 		},
 		{
-			Keys: map[string]interface{}{"actor.id": 1},
+			Keys: bson.D{{Key: "actor.id", Value: 1}},
 		},
 		{
-			Keys: map[string]interface{}{"tags": 1},
+			Keys: bson.D{{Key: "tags", Value: 1}},
 		},
 	}
 	if _, err := auditCollection.Indexes().CreateMany(ctx, auditIndexes); err != nil {
@@ -110,14 +108,14 @@ func (m *MongoDB) CreateIndexes(ctx context.Context) error {
 	credCollection := m.Collection("credentials")
 	credIndexes := []mongo.IndexModel{
 		{
-			Keys:    map[string]interface{}{"name": 1},
+			Keys:    bson.D{{Key: "name", Value: 1}},
 			Options: options.Index().SetUnique(true),
 		},
 		{
-			Keys: map[string]interface{}{"usage.environmentId": 1},
+			Keys: bson.D{{Key: "usage.environmentId", Value: 1}},
 		},
 		{
-			Keys: map[string]interface{}{"timestamps.expiresAt": 1},
+			Keys: bson.D{{Key: "timestamps.expiresAt", Value: 1}},
 		},
 	}
 	if _, err := credCollection.Indexes().CreateMany(ctx, credIndexes); err != nil {
