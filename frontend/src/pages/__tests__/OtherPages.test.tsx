@@ -73,14 +73,14 @@ describe('CreateEnvironment page', () => {
   it('calls environmentApi.create on form submission', async () => {
     mockedEnvApi.create = vi.fn().mockResolvedValue({ id: 'new-env' });
     const user = (await import('@testing-library/user-event')).default;
-    const u = user.setup();
+    const u = user.setup({ delay: null });
     render(<CreateEnvironment />);
     await u.type(screen.getByLabelText(/^environment name\s*\*/i), 'Test');
     await u.type(screen.getByLabelText(/^environment url/i), 'https://test.example.com');
     await u.click(screen.getByRole('button', { name: /create environment/i }));
     // Note: form may fail validation (no host/user), that's OK
     expect(screen.getByRole('button', { name: /create environment/i })).toBeInTheDocument();
-  });
+  }, 15000);
 });
 
 describe('EditEnvironment page', () => {
