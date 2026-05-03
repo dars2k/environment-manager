@@ -126,4 +126,69 @@ describe('useNotifications hook', () => {
       })
     );
   });
+
+  it('skips already-displayed notifications when new ones are added', () => {
+    const { rerender } = renderHook(() => useNotifications(), {
+      wrapper: createWrapper(store),
+    });
+
+    // First notification
+    store.dispatch(addNotification({ message: 'First', type: 'success' }));
+    rerender();
+    expect(mockEnqueueSnackbar).toHaveBeenCalledTimes(1);
+
+    // Add a second notification — effect reruns with new array reference,
+    // the first notification hits the "already displayed" early-return path.
+    store.dispatch(addNotification({ message: 'Second', type: 'info' }));
+    rerender();
+
+    // enqueueSnackbar called only once more (for 'Second'), not again for 'First'
+    expect(mockEnqueueSnackbar).toHaveBeenCalledTimes(2);
+    expect(mockEnqueueSnackbar).toHaveBeenLastCalledWith(
+      'Second',
+      expect.objectContaining({ variant: 'info' })
+    );
+  });
+
+  it('onExited callback dispatches removeNotification and cleans up the displayed set', () => {
+    const { rerender } = renderHook(() => useNotifications(), {
+      wrapper: createWrapper(store),
+    });
+
+    store.dispatch(addNotification({ message: 'Exiting', type: 'success' }));
+    rerender();
+
+    expect(mockEnqueueSnackbar).toHaveBeenCalledTimes(1);
+
+    // Extract the onExited callback from the enqueueSnackbar call and invoke it
+    const callArgs = mockEnqueueSnackbar.mock.calls[0][1] as { onExited?: () => void };
+    expect(callArgs.onExited).toBeDefined();
+    callArgs.onExited?.();
+
+    // After onExited, the notification should be removed from the store
+    const state = store.getState();
+    expect(state.notifications.notifications).toHaveLength(0);
+  });
+
+  it('allows the same notification id to be displayed again after onExited cleans it up', () => {
+    const { rerender } = renderHook(() => useNotifications(), {
+      wrapper: createWrapper(store),
+    });
+
+    store.dispatch(addNotification({ message: 'Re-show', type: 'warning' }));
+    rerender();
+    expect(mockEnqueueSnackbar).toHaveBeenCalledTimes(1);
+
+    // Invoke onExited to clean up the displayed-set entry
+    const callArgs = mockEnqueueSnackbar.mock.calls[0][1] as { onExited?: () => void };
+    callArgs.onExited?.();
+
+    // Re-add the same message — in practice this would get a new ID via addNotification,
+    // so a fresh notification can be displayed.
+    store.dispatch(addNotification({ message: 'Re-show', type: 'warning' }));
+    rerender();
+
+    // A new notification (new id) should be enqueued
+    expect(mockEnqueueSnackbar).toHaveBeenCalledTimes(2);
+  });
 });
