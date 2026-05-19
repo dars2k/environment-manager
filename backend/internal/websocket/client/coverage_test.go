@@ -2,7 +2,6 @@ package client
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -14,10 +13,6 @@ type errorConn struct {
 
 func (e *errorConn) WriteMessage(messageType int, data []byte) error {
 	return assert.AnError
-}
-
-func (e *errorConn) SetWriteDeadline(t time.Time) error {
-	return nil
 }
 
 func (e *errorConn) Close() error {

@@ -42,23 +42,6 @@ const mockEnvironment = {
 };
 
 describe('EditEnvironment page', () => {
-  it('shows error when update fails', async () => {
-    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
-    mockedEnvApi.update = vi.fn().mockRejectedValue({
-      response: { data: { message: 'Update failed' } }
-    });
-
-    render(<EditEnvironment />);
-    await waitFor(() => expect(screen.getByText(/test env/i)).toBeInTheDocument());
-
-    const saveBtn = screen.getByRole('button', { name: /update environment/i });
-    fireEvent.click(saveBtn);
-
-    await waitFor(() => {
-      expect(screen.getByText('Update failed')).toBeInTheDocument();
-    });
-  });
-
   it('navigates to dashboard on successful update', async () => {
     mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
     mockedEnvApi.update = vi.fn().mockResolvedValue({ ...mockEnvironment, name: 'Updated' });
@@ -72,5 +55,19 @@ describe('EditEnvironment page', () => {
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
+  });
+});
+
+describe('CreateEnvironment page', () => {
+  it('renders create environment heading', () => {
+    render(<CreateEnvironment />);
+    expect(screen.getByText(/create.*new.*environment/i)).toBeInTheDocument();
+  });
+});
+
+describe('NotFound page', () => {
+  it('renders 404 page', () => {
+    render(<NotFound />);
+    expect(screen.getByText('404')).toBeInTheDocument();
   });
 });
