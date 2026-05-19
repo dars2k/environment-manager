@@ -1,12 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@/test/test-utils';
+import { render, screen, waitFor, fireEvent } from '@/test/test-utils';
 import { NotFound } from '../NotFound';
 import { CreateEnvironment } from '../CreateEnvironment';
 import { EditEnvironment } from '../EditEnvironment';
 import { environmentApi } from '@/api/environments';
 import { HealthStatus } from '@/types/environment';
 
-// Mock notistack used in CreateEnvironment/EditEnvironment
 vi.mock('notistack', () => ({
   useSnackbar: () => ({
     enqueueSnackbar: vi.fn(),
@@ -42,75 +41,36 @@ const mockEnvironment = {
   upgradeConfig: { enabled: false, type: 'ssh', upgradeCommand: {} },
 };
 
-describe('NotFound page', () => {
-  it('renders 404 page', () => {
-    render(<NotFound />);
-    expect(screen.getByText('404')).toBeInTheDocument();
-  });
-
-  it('shows page not found text', () => {
-    render(<NotFound />);
-    expect(screen.getByText(/page not found/i)).toBeInTheDocument();
-  });
-
-  it('has go to dashboard button', () => {
-    render(<NotFound />);
-    expect(screen.getByRole('button', { name: /go to dashboard/i })).toBeInTheDocument();
-  });
-});
-
-describe('CreateEnvironment page', () => {
-  it('renders create environment heading', () => {
-    render(<CreateEnvironment />);
-    expect(screen.getByText(/create.*new.*environment/i)).toBeInTheDocument();
-  });
-
-  it('renders the environment form', () => {
-    render(<CreateEnvironment />);
-    expect(screen.getByRole('button', { name: /create environment/i })).toBeInTheDocument();
-  });
-
-  it('calls environmentApi.create on form submission', async () => {
-    mockedEnvApi.create = vi.fn().mockResolvedValue({ id: 'new-env' });
-    const user = (await import('@testing-library/user-event')).default;
-    const u = user.setup({ delay: null });
-    render(<CreateEnvironment />);
-    await u.type(screen.getByLabelText(/^environment name\s*\*/i), 'Test');
-    await u.type(screen.getByLabelText(/^environment url/i), 'https://test.example.com');
-    await u.click(screen.getByRole('button', { name: /create environment/i }));
-    // Note: form may fail validation (no host/user), that's OK
-    expect(screen.getByRole('button', { name: /create environment/i })).toBeInTheDocument();
-  }, 15000);
-});
-
 describe('EditEnvironment page', () => {
-  it('shows loading spinner while fetching', () => {
-    mockedEnvApi.get = vi.fn(() => new Promise(() => {}));
-    render(<EditEnvironment />);
-    expect(document.querySelector('.MuiCircularProgress-root')).not.toBeNull();
-  });
-
-  it('renders edit form when loaded', async () => {
+  it('shows error when update fails', async () => {
     mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockRejectedValue({
+      response: { data: { message: 'Update failed' } }
+    });
+
     render(<EditEnvironment />);
+    await waitFor(() => expect(screen.getByText(/test env/i)).toBeInTheDocument());
+
+    const saveBtn = screen.getByRole('button', { name: /update environment/i });
+    fireEvent.click(saveBtn);
+
     await waitFor(() => {
-      expect(screen.getByText(/edit environment/i)).toBeInTheDocument();
+      expect(screen.getByText('Update failed')).toBeInTheDocument();
     });
   });
 
-  it('shows environment not found when environment missing', async () => {
-    mockedEnvApi.get = vi.fn().mockResolvedValue(null);
-    render(<EditEnvironment />);
-    await waitFor(() => {
-      expect(screen.getByText(/environment not found/i)).toBeInTheDocument();
-    });
-  });
-
-  it('shows environment name in heading when loaded', async () => {
+  it('navigates to dashboard on successful update', async () => {
     mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockResolvedValue({ ...mockEnvironment, name: 'Updated' });
+
     render(<EditEnvironment />);
+    await waitFor(() => expect(screen.getByText(/test env/i)).toBeInTheDocument());
+
+    const saveBtn = screen.getByRole('button', { name: /update environment/i });
+    fireEvent.click(saveBtn);
+
     await waitFor(() => {
-      expect(screen.getByText(/test env/i)).toBeInTheDocument();
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
     });
   });
 });

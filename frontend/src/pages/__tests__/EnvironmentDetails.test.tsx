@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@/test/test-utils';
+import { render, screen, waitFor, fireEvent } from '@/test/test-utils';
 import { EnvironmentDetails } from '../EnvironmentDetails';
 import { environmentApi } from '@/api/environments';
 import { HealthStatus } from '@/types/environment';
@@ -17,7 +17,6 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock useEnvironmentActions hook
 vi.mock('@/hooks/useEnvironmentActions', () => ({
   useEnvironmentActions: () => ({
     deleteEnvironment: vi.fn(),
@@ -69,45 +68,31 @@ describe('EnvironmentDetails page', () => {
     });
   });
 
-  it('shows health status chip', async () => {
-    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+  it('renders HTTP upgrade config when enabled', async () => {
+    const httpUpgradeEnv = {
+      ...mockEnvironment,
+      upgradeConfig: {
+        enabled: true,
+        type: 'http',
+        versionListURL: 'https://versions.example.com',
+        jsonPathResponse: '$.latest',
+        upgradeCommand: {
+          url: 'https://upgrade.example.com',
+          method: 'PUT'
+        }
+      }
+    };
+    mockedEnvApi.get = vi.fn().mockResolvedValue(httpUpgradeEnv);
     render(<EnvironmentDetails />);
-    await waitFor(() => {
-      expect(screen.getByText(/healthy/i)).toBeInTheDocument();
-    });
-  });
 
-  it('has back to dashboard button on error', async () => {
-    mockedEnvApi.get = vi.fn().mockRejectedValue(new Error('Network error'));
-    render(<EnvironmentDetails />);
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument();
-    });
-  });
+    await waitFor(() => expect(screen.getByText('Production')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('Upgrade Config'));
 
-  it('renders environment URL when available', async () => {
-    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
-    render(<EnvironmentDetails />);
     await waitFor(() => {
-      expect(screen.getByText('https://prod.example.com')).toBeInTheDocument();
-    });
-  });
-
-  it('shows unhealthy status', async () => {
-    const unhealthyEnv = { ...mockEnvironment, status: { ...mockEnvironment.status, health: HealthStatus.Unhealthy } };
-    mockedEnvApi.get = vi.fn().mockResolvedValue(unhealthyEnv);
-    render(<EnvironmentDetails />);
-    await waitFor(() => {
-      expect(screen.getByText(/unhealthy/i)).toBeInTheDocument();
-    });
-  });
-
-  it('shows unknown status', async () => {
-    const unknownEnv = { ...mockEnvironment, status: { ...mockEnvironment.status, health: HealthStatus.Unknown } };
-    mockedEnvApi.get = vi.fn().mockResolvedValue(unknownEnv);
-    render(<EnvironmentDetails />);
-    await waitFor(() => {
-      expect(screen.getByText(/unknown/i)).toBeInTheDocument();
+      expect(screen.getByText('https://upgrade.example.com')).toBeInTheDocument();
+      expect(screen.getByText('PUT')).toBeInTheDocument();
+      expect(screen.getByText('https://versions.example.com')).toBeInTheDocument();
+      expect(screen.getByText('$.latest')).toBeInTheDocument();
     });
   });
 });

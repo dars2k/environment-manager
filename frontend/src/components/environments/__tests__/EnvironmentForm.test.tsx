@@ -608,4 +608,31 @@ describe('EnvironmentForm', () => {
       }
     });
   });
+
+  it('handles HTTP upgrade body correctly', async () => {
+    const { fireEvent: fe } = await import('@testing-library/react');
+    const initialData = {
+      ...mockEnvironment,
+      upgradeConfig: {
+        ...mockEnvironment.upgradeConfig,
+        enabled: true,
+        type: 'http' as const,
+        upgradeCommand: {
+          url: 'http://test.com',
+          method: 'POST',
+          body: { key: 'value' }
+        }
+      }
+    };
+    render(<EnvironmentForm initialData={initialData} onSubmit={vi.fn()} mode="edit" />);
+
+    // Open Upgrade Config
+    const upgradeAccordion = screen.getByText('Upgrade Configuration');
+    fe.click(upgradeAccordion);
+
+    // Check if body is stringified in the text field
+    await waitFor(() => {
+      expect(screen.getByDisplayValue(/{"key":"value"}/i)).toBeInTheDocument();
+    });
+  });
 });

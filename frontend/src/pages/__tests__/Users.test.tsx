@@ -47,7 +47,6 @@ describe('Users page', () => {
     mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser, mockViewer]);
     render(<Users />);
     await waitFor(() => {
-      // Username column cells
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('viewer1')).toBeInTheDocument();
     });
@@ -73,7 +72,6 @@ describe('Users page', () => {
     mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser, mockViewer]);
     render(<Users />);
     await waitFor(() => {
-      // viewer1 user has viewer role chip
       expect(screen.getByText('viewer')).toBeInTheDocument();
     });
   });
@@ -115,7 +113,6 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
     });
-    // Click the edit icon button
     const editButtons = document.querySelectorAll('[data-testid="EditIcon"]');
     if (editButtons.length > 0) {
       fireEvent.click(editButtons[0].parentElement!);
@@ -136,13 +133,10 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getByText(/create new user/i)).toBeInTheDocument();
     });
-    // Fill in username
     const usernameField = screen.getByLabelText(/username/i);
     fireEvent.change(usernameField, { target: { value: 'newuser' } });
-    // Fill in password
     const passwordFields = screen.getAllByLabelText(/password/i);
     fireEvent.change(passwordFields[0], { target: { value: 'password123' } });
-    // Submit
     const createBtn = screen.getByRole('button', { name: /^create$/i });
     fireEvent.click(createBtn);
     await waitFor(() => {
@@ -178,7 +172,6 @@ describe('Users page', () => {
       await waitFor(() => {
         expect(screen.getAllByText(/delete user/i).length).toBeGreaterThanOrEqual(1);
       });
-      // Click the Delete confirm button
       const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
       fireEvent.click(deleteBtn);
       await waitFor(() => {
@@ -201,7 +194,6 @@ describe('Users page', () => {
       });
       const cancelBtn = screen.getByRole('button', { name: /cancel/i });
       fireEvent.click(cancelBtn);
-      // Dialog should close
       await waitFor(() => {
         const deleteBtns = screen.queryAllByText(/^delete$/i);
         expect(deleteBtns.length).toBe(0);
@@ -215,7 +207,7 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
     });
-    const keyButtons = document.querySelectorAll('[data-testid="KeyIcon"]');
+    const keyButtons = document.querySelectorAll('[data-testid="VpnKeyIcon"]');
     if (keyButtons.length > 0) {
       fireEvent.click(keyButtons[0].parentElement!);
       await waitFor(() => {
@@ -229,6 +221,42 @@ describe('Users page', () => {
     render(<Users />);
     await waitFor(() => {
       expect(screen.getByText('Never')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error when password reset fails', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Invalid password' } }
+    });
+    render(<Users />);
+    await waitFor(() => expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1));
+    const keyButtons = document.querySelectorAll('[data-testid="VpnKeyIcon"]');
+    fireEvent.click(keyButtons[0].parentElement!);
+    await waitFor(() => expect(screen.getByText(/reset password for/i)).toBeInTheDocument());
+    const newPasswordInput = screen.getByLabelText('New Password');
+    const confirmPasswordInput = screen.getByLabelText('Confirm Password');
+    fireEvent.change(newPasswordInput, { target: { value: 'newpassword123' } });
+    fireEvent.change(confirmPasswordInput, { target: { value: 'newpassword123' } });
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Invalid password')).toBeInTheDocument();
+    });
+  });
+
+  it('shows error when user deletion fails', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.deleteUser = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Delete failed' } }
+    });
+    render(<Users />);
+    await waitFor(() => expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1));
+    const deleteButtons = document.querySelectorAll('[data-testid="DeleteIcon"]');
+    fireEvent.click(deleteButtons[0].parentElement!);
+    const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
+    fireEvent.click(deleteBtn);
+    await waitFor(() => {
+      expect(screen.getByText('Delete failed')).toBeInTheDocument();
     });
   });
 });

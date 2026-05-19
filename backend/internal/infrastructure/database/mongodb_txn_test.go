@@ -1,7 +1,5 @@
 package database
 
-// Additional tests to improve Transaction coverage using the mtest mock client.
-
 import (
 	"context"
 	"errors"
@@ -13,8 +11,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 )
 
-// TestTransaction_FnError_AbortSucceeds covers the path where fn returns an error and
-// AbortTransaction succeeds (returns fn's error).
 func TestTransaction_FnError_AbortSucceeds(t *testing.T) {
 	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
 
@@ -25,21 +21,18 @@ func TestTransaction_FnError_AbortSucceeds(t *testing.T) {
 		}
 
 		fnErr := errors.New("operation failed")
-		err := db.Transaction(context.Background(), func(sc mongo.SessionContext) error {
+		_ = db.Transaction(context.Background(), func(sc mongo.SessionContext) error {
 			return fnErr
 		})
-		// Either the session start or the transaction itself fails in mock mode.
-		_ = err
 	})
 }
 
-// TestNewMongoDB_VeryShortTimeout exercises the ping timeout error path.
 func TestNewMongoDB_VeryShortTimeout(t *testing.T) {
 	_, err := NewMongoDB(
-		"mongodb://192.0.2.1:27017", // TEST-NET address; unreachable
+		"mongodb://192.0.2.1:27017",
 		"testdb",
 		5,
-		1*time.Millisecond, // extremely short timeout → ping fails
+		1*time.Millisecond,
 	)
 	assert.Error(t, err)
 }
