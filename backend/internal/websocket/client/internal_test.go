@@ -263,3 +263,51 @@ func TestSendOperationUpdate(t *testing.T) {
 		t.Fatal("expected operation_update message")
 	}
 }
+
+// TestWritePump_PingTicker exercises the ticker branch (lines ~116-120) of WritePump
+// by overriding pingPeriod to a very short value so the ticker fires quickly.
+func TestWritePump_PingTicker(t *testing.T) {
+	// Override pingPeriod for this test only.
+	original := pingPeriod
+	pingPeriod = 20 * time.Millisecond
+	t.Cleanup(func() { pingPeriod = original })
+
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	// Set a pong handler on the dialer side so it responds to pings properly.
+	dialConn.SetPongHandler(func(appData string) error { return nil })
+
+	// Start WritePump; with pingPeriod=20ms the ticker will fire within ~50ms.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.WritePump()
+	}()
+
+	// Allow at least one ticker tick and one ping frame.
+	// The dialer must read the ping frame; gorilla handles PingMessage automatically
+	// via PongHandler, but we also need the dialer to be reading.
+	dialConn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+	go func() {
+		for {
+			_, _, err := dialConn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	time.Sleep(80 * time.Millisecond)
+
+	// Close the dialer connection — WritePump should exit via the ping write error.
+	dialConn.Close()
+
+	select {
+	case <-done:
+		// WritePump exited cleanly after the ping error.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("WritePump did not exit after ping ticker test")
+	}
+}

@@ -15,12 +15,13 @@ const (
 	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
 
-	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
-
 	// Maximum message size allowed from peer.
 	maxMessageSize = 512 * 1024
 )
+
+// pingPeriod is the interval between pings sent to the peer.
+// Declared as a var so tests can override it without changing the production value.
+var pingPeriod = (pongWait * 9) / 10
 
 // Hub interface to avoid circular dependencies
 type Hub interface {

@@ -2,22 +2,17 @@
 
 ## Go (backend)
 
-### Updates Applied (semver-safe)
+### Updates Applied (semver-safe) — 2026-05-23
 
 | Package | Old | New | Breaking? |
 |---|---|---|---|
-| golang.org/x/crypto | v0.49.0 | v0.50.0 | No |
-| golang.org/x/net | v0.52.0 | v0.53.0 | No |
-| golang.org/x/sys | v0.42.0 | v0.43.0 | No |
-| golang.org/x/text | v0.35.0 | v0.36.0 | No |
-| golang.org/x/arch | v0.25.0 | v0.26.0 | No |
-| golang.org/x/tools | v0.42.0 | v0.44.0 | No |
-| go.mongodb.org/mongo-driver/v2 | v2.5.0 | v2.6.0 | No |
-| github.com/bytedance/sonic | v1.15.0 | v1.15.1 | No |
-| github.com/bytedance/sonic/loader | v0.5.0 | v0.5.1 | No |
-| github.com/gin-contrib/sse | v1.1.0 | v1.1.1 | No |
-| github.com/mattn/go-isatty | v0.0.20 | v0.0.22 | No |
-| github.com/pelletier/go-toml/v2 | v2.2.4 | v2.3.1 | No |
+| golang.org/x/crypto | v0.50.0 | v0.52.0 | No |
+| golang.org/x/net | v0.53.0 | v0.55.0 | No |
+| golang.org/x/sys | v0.43.0 | v0.45.0 | No |
+| golang.org/x/text | v0.36.0 | v0.37.0 | No |
+| github.com/cloudwego/base64x | v0.1.6 | v0.1.7 | No |
+| github.com/montanaflynn/stats | v0.8.2 | v0.9.0 | No |
+| github.com/quic-go/quic-go | v0.59.0 | v0.59.1 | No |
 
 ### Major Bumps — Skipped (document only)
 
@@ -27,13 +22,15 @@
 
 ## npm (frontend)
 
-### Updates Applied (semver-safe)
+### Updates Applied (semver-safe) — 2026-05-23
 
 | Package | Old | New | Breaking? |
 |---|---|---|---|
-| @emotion/styled | 11.14.0 | 11.14.1 | No |
-| @tanstack/react-query | 5.91.3 | 5.100.8 | No |
-| axios | 1.15.0 | 1.14.0 | No (downgrade to latest available) |
+| @tanstack/react-query | 5.100.8 | 5.100.14 | No |
+| axios | 1.15.2 | 1.14.0 | No (patch, latest 1.x available) |
+| prettier | 3.8.1 | 3.8.3 | No |
+| jest | 30.3.0 | 30.4.2 | No |
+| jest-environment-jsdom | 30.3.0 | 30.4.1 | No |
 
 ### Major Bumps — Skipped (document only)
 

@@ -12,13 +12,21 @@ import (
 
 // TestMongoDB_Methods tests the simple getter methods
 func TestMongoDB_Methods(t *testing.T) {
-	// Create a mock client and database for testing
-	ctx := context.Background()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer pingCancel()
+
+	client, err := mongo.Connect(pingCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		t.Skip("MongoDB not available for testing")
 		return
 	}
+	if pingErr := client.Ping(pingCtx, nil); pingErr != nil {
+		_ = client.Disconnect(context.Background())
+		t.Skip("MongoDB not available for testing")
+		return
+	}
+
+	ctx := context.Background()
 	defer client.Disconnect(ctx)
 
 	database := client.Database("test_db")
@@ -42,13 +50,11 @@ func TestMongoDB_Methods(t *testing.T) {
 	})
 
 	t.Run("Close", func(t *testing.T) {
-		// Create a separate instance for close test
 		testClient, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 		testDB := &MongoDB{
 			client:   testClient,
 			database: testClient.Database("test_db"),
 		}
-		
 		err := testDB.Close(ctx)
 		assert.NoError(t, err)
 	})
@@ -116,88 +122,88 @@ func TestNewMongoDB_InvalidURI(t *testing.T) {
 
 // TestMongoDB_CreateIndexes_Coverage tests CreateIndexes for coverage
 func TestMongoDB_CreateIndexes_Coverage(t *testing.T) {
-	// This test is designed to exercise the CreateIndexes code path
-	// even if it can't actually create indexes
-	
-	ctx := context.Background()
-	
-	// Try to connect to a real MongoDB instance
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	// Use a very short timeout so the test skips quickly when MongoDB is absent.
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer pingCancel()
+
+	client, err := mongo.Connect(pingCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		t.Skip("MongoDB not available for testing")
 		return
 	}
+	if err := client.Ping(pingCtx, nil); err != nil {
+		_ = client.Disconnect(context.Background())
+		t.Skip("MongoDB not available for testing")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	defer client.Disconnect(ctx)
-	
-	// Test with a unique database to avoid conflicts
+
 	dbName := "test_db_" + time.Now().Format("20060102150405")
 	database := client.Database(dbName)
-	
+
 	mongodb := &MongoDB{
 		client:   client,
 		database: database,
 	}
-	
-	// Test CreateIndexes
+
 	err = mongodb.CreateIndexes(ctx)
-	// The method might succeed or fail depending on MongoDB setup
-	// We're mainly interested in code coverage here
 	if err != nil {
 		t.Logf("CreateIndexes returned error (may be expected): %v", err)
 	}
-	
-	// Clean up test database
+
 	_ = database.Drop(ctx)
 }
 
 // TestMongoDB_Transaction_Coverage tests Transaction for coverage
 func TestMongoDB_Transaction_Coverage(t *testing.T) {
-	ctx := context.Background()
-	
-	// Try to connect to a real MongoDB instance
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	pingCtx, pingCancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer pingCancel()
+
+	client, err := mongo.Connect(pingCtx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	if err != nil {
 		t.Skip("MongoDB not available for testing")
 		return
 	}
+	if err := client.Ping(pingCtx, nil); err != nil {
+		_ = client.Disconnect(context.Background())
+		t.Skip("MongoDB not available for testing")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 	defer client.Disconnect(ctx)
-	
+
 	database := client.Database("test_db")
-	
+
 	mongodb := &MongoDB{
 		client:   client,
 		database: database,
 	}
-	
-	// Test successful transaction
+
 	executed := false
 	err = mongodb.Transaction(ctx, func(sc mongo.SessionContext) error {
 		executed = true
 		return nil
 	})
-	
-	// Transactions might not be supported in all MongoDB setups
+
 	if err != nil {
 		t.Logf("Transaction returned error (may be expected): %v", err)
-		// Still check if the function was called
-		if err.Error() == "failed to start session: Current topology does not support sessions" {
-			t.Skip("MongoDB replica set not available for transaction testing")
-		}
 	} else {
 		assert.True(t, executed)
 	}
-	
-	// Test transaction with error
+
 	testErr := assert.AnError
 	err = mongodb.Transaction(ctx, func(sc mongo.SessionContext) error {
 		return testErr
 	})
-	
+
 	if err != nil && err != testErr {
-		// Might fail to start session
 		t.Logf("Transaction setup failed: %v", err)
 	} else if err == testErr {
-		// Function error was properly returned
 		assert.Equal(t, testErr, err)
 	}
 }
