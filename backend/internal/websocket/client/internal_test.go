@@ -264,6 +264,71 @@ func TestSendOperationUpdate(t *testing.T) {
 	}
 }
 
+// TestReadPump_PongHandlerCalled exercises the pong handler set inside ReadPump
+// (the c.conn.SetPongHandler closure). The dialer sends a Pong control frame;
+// the gorilla library on the server side invokes the handler, covering lines 63-65.
+func TestReadPump_PongHandlerCalled(t *testing.T) {
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.ReadPump()
+	}()
+
+	// Allow ReadPump to start and install the PongHandler.
+	time.Sleep(30 * time.Millisecond)
+
+	// Send a Pong control frame from the dialer. The gorilla server will call
+	// the PongHandler registered by ReadPump, updating the read deadline.
+	err := dialConn.WriteControl(websocket.PongMessage, []byte("pong-data"), time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl pong: %v", err)
+	}
+	time.Sleep(60 * time.Millisecond)
+
+	// Close dialer to let ReadPump exit.
+	dialConn.Close()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+	}
+}
+
+// TestReadPump_UnexpectedCloseCode exercises the IsUnexpectedCloseError log line
+// in ReadPump by sending a websocket close frame with a code that is NOT in the
+// expected list (CloseGoingAway, CloseAbnormalClosure). Using CloseInternalServerErr
+// (1011) makes IsUnexpectedCloseError return true, which runs the log.Printf line.
+func TestReadPump_UnexpectedCloseCode(t *testing.T) {
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.ReadPump()
+	}()
+
+	time.Sleep(30 * time.Millisecond)
+
+	// Send close with CloseInternalServerErr (1011) — not in the expected list.
+	closeMsg := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "test")
+	err := dialConn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl close: %v", err)
+	}
+
+	select {
+	case <-done:
+		// ReadPump exited after logging the unexpected close error.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("ReadPump did not exit after unexpected close code")
+	}
+}
+
 // TestWritePump_PingTicker exercises the ticker branch (lines ~116-120) of WritePump
 // by overriding pingPeriod to a very short value so the ticker fires quickly.
 func TestWritePump_PingTicker(t *testing.T) {

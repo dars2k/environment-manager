@@ -3,6 +3,7 @@ package main
 // Extra scheduler tests to improve coverage of startHealthCheckScheduler branches.
 
 import (
+	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -147,6 +148,54 @@ func TestStartHealthCheckScheduler_DisabledHealthCheck(t *testing.T) {
 		startHealthCheckScheduler(svc, 5*time.Millisecond, logger)
 	}()
 	time.Sleep(50 * time.Millisecond)
+}
+
+// TestStartHealthCheckScheduler_CheckHealthFails covers the logger.Error("Health check failed")
+// line (inside the per-environment goroutine) when service.CheckHealth returns an error.
+// CheckHealth calls repo.GetByID first; returning an error from GetByID causes CheckHealth
+// to propagate the error, which the scheduler logs at Error level.
+func TestStartHealthCheckScheduler_CheckHealthFails(t *testing.T) {
+	envRepo := new(mockEnvRepoMain)
+	logRepo := new(mockLogRepoMain)
+	auditRepo := new(mockAuditRepoMain)
+
+	auditRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Maybe()
+	logRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Maybe()
+
+	id := primitive.NewObjectID()
+	env := &entities.Environment{
+		ID:   id,
+		Name: "failing-hc-env",
+		HealthCheck: entities.HealthCheckConfig{
+			Enabled:  true,
+			Interval: 0, // 0 means use defaultInterval, which is very short in this test
+		},
+		Status: entities.Status{Health: entities.HealthStatusUnknown},
+	}
+
+	// List succeeds and returns the environment so the scheduler tries to check it.
+	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).
+		Return([]*entities.Environment{env}, nil)
+
+	// GetByID fails → CheckHealth returns an error → scheduler logs Error("Health check failed").
+	envRepo.On("GetByID", mock.Anything, id.Hex()).
+		Return(nil, fmt.Errorf("repo error: not found"))
+
+	svc := newTestService(envRepo, logRepo, auditRepo)
+
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	// Run the scheduler with a very short interval so the health check goroutine fires quickly.
+	go func() {
+		startHealthCheckScheduler(svc, 10*time.Millisecond, logger)
+	}()
+
+	// Wait long enough for the scheduler to tick, start the per-env goroutine, and log the error.
+	time.Sleep(200 * time.Millisecond)
+
+	// The test passes if no panic occurred.  Coverage of the Error("Health check failed") line
+	// is recorded because the GetByID mock returns an error, causing CheckHealth to fail.
 }
 
 // TestStartHealthCheckScheduler_ListFilter exercises the filter passed to List.
