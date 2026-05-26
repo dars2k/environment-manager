@@ -211,5 +211,17 @@ func (c *Client) SendOperationUpdate(operationID string, update interface{}) {
 
 // Close closes the client connection
 func (c *Client) Close() {
+	c.hub.Unregister(c)
+	if c.conn != nil {
+		c.conn.Close()
+	}
+
+	// Use a non-blocking check to see if channel is already closed
+	// or use a mutex to protect the close.
+	// Actually, the common pattern is to close the channel when the hub unregisters or client is closed.
+	// To prevent double close panic:
+	defer func() {
+		recover()
+	}()
 	close(c.send)
 }

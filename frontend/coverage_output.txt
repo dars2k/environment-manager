@@ -1,0 +1,1022 @@
+$ vitest --coverage --run
+
+ RUN  v3.2.4 /app/frontend
+      Coverage enabled with v8
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > renders nothing when environment is null
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > does not render when closed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > renders dialog title when open
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > renders dialog when open with environment
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should render empty form in create mode
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > pre-fills form with environment name
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows form fields
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > pre-fills host field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows validation error when name is empty on submit
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should render form with initial values in edit mode
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > closes dialog on Cancel click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows password required error when credentials type is password
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should validate required fields
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows validation error when name is cleared and submitted
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should handle form submission
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > calls environmentApi.update on valid submit
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > closes dialog on Cancel click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows the dialog title
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > calls environmentApi.create on valid submit
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows health check switch
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > toggles health check fields
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows custom commands accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows upgrade configuration accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows private key error when credentials type is key
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows error on failed update
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > expands custom commands accordion and shows SSH command field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > expands upgrade configuration and enables it
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should handle cancel
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows custom commands accordion section
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should handle SSH control toggle
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows upgrade configuration accordion section
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > toggles health check fields when switch clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show all configuration sections
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > switches to HTTP command type in custom commands
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should handle SSH authentication type changes
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > updates environment URL field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > updates health check fields
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > changes SSH command in custom commands accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should disable form fields when submitting
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > shows HTTP fields in custom commands after switching to HTTP
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should toggle health check accordion via switch
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows error from failed API call
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show health check fields when enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > enables upgrade config and updates version list URL
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show health check disabled text when health check is off
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > expands custom commands accordion and shows SSH command field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show restart disabled text when restart is toggled off
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows SSH command field in custom commands accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show restart SSH command field when SSH is enabled and restart enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > changes upgrade SSH command in upgrade section
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > switches to HTTP command type and shows URL field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show upgrade config fields when upgrade is enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > expands upgrade configuration accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show JSONPath field when upgrade is enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EditEnvironmentDialog.test.tsx > EditEnvironmentDialog > switches upgrade command to HTTP type in edit dialog
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows upgrade fields when enable version upgrades is toggled on
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show upgrade command type selector when upgrade is enabled
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/EditEnvironmentDialog.test.tsx (22 tests) 22899ms
+   ✓ EditEnvironmentDialog > renders dialog when open with environment  1274ms
+   ✓ EditEnvironmentDialog > pre-fills form with environment name  757ms
+   ✓ EditEnvironmentDialog > pre-fills host field  486ms
+   ✓ EditEnvironmentDialog > closes dialog on Cancel click  1271ms
+   ✓ EditEnvironmentDialog > shows validation error when name is cleared and submitted  2052ms
+   ✓ EditEnvironmentDialog > calls environmentApi.update on valid submit  850ms
+   ✓ EditEnvironmentDialog > shows the dialog title  412ms
+   ✓ EditEnvironmentDialog > shows health check switch  727ms
+   ✓ EditEnvironmentDialog > toggles health check fields  963ms
+   ✓ EditEnvironmentDialog > shows custom commands accordion  368ms
+   ✓ EditEnvironmentDialog > shows upgrade configuration accordion  369ms
+   ✓ EditEnvironmentDialog > shows error on failed update  622ms
+   ✓ EditEnvironmentDialog > expands custom commands accordion and shows SSH command field  707ms
+   ✓ EditEnvironmentDialog > expands upgrade configuration and enables it  1851ms
+   ✓ EditEnvironmentDialog > switches to HTTP command type in custom commands  1058ms
+   ✓ EditEnvironmentDialog > updates environment URL field  462ms
+   ✓ EditEnvironmentDialog > changes SSH command in custom commands accordion  866ms
+   ✓ EditEnvironmentDialog > shows HTTP fields in custom commands after switching to HTTP  1231ms
+   ✓ EditEnvironmentDialog > enables upgrade config and updates version list URL  2148ms
+   ✓ EditEnvironmentDialog > changes upgrade SSH command in upgrade section  2138ms
+   ✓ EditEnvironmentDialog > switches upgrade command to HTTP type in edit dialog  2237ms
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > updates authentication method to key and shows private key field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should show SSH upgrade command when SSH enabled and upgrade enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > updates description field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > updates health check validation type
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should update SSH host input
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > changes SSH command in custom commands accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > shows HTTP URL field in custom commands accordion after switching to HTTP
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > changes headers JSON in HTTP restart command section
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > changes upgrade SSH commands in upgrade accordion
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > should update SSH username input
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > switches upgrade command to HTTP type
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > shows error when error prop provided
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > initializes from edit mode data with SSH enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > shows HTTP upgrade config when upgrade enabled without SSH
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx > CreateEnvironmentDialog > updates version list URL
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > NotFound page > renders 404 page
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > NotFound page > shows page not found text
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > NotFound page > has go to dashboard button
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > handleHttpUpgradeChange updates form data
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > CreateEnvironment page > renders create environment heading
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > CreateEnvironment page > renders the environment form
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > CreateEnvironment page > calls environmentApi.create on form submission
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/CreateEnvironmentDialog.test.tsx (27 tests) 36464ms
+   ✓ CreateEnvironmentDialog > renders dialog title when open  903ms
+   ✓ CreateEnvironmentDialog > shows form fields  1206ms
+   ✓ CreateEnvironmentDialog > shows validation error when name is empty on submit  871ms
+   ✓ CreateEnvironmentDialog > shows password required error when credentials type is password  3308ms
+   ✓ CreateEnvironmentDialog > closes dialog on Cancel click  498ms
+   ✓ CreateEnvironmentDialog > calls environmentApi.create on valid submit  2360ms
+   ✓ CreateEnvironmentDialog > shows private key error when credentials type is key  2399ms
+   ✓ CreateEnvironmentDialog > toggles health check fields when switch clicked  1436ms
+   ✓ CreateEnvironmentDialog > updates health check fields  1612ms
+   ✓ CreateEnvironmentDialog > shows error from failed API call  2589ms
+   ✓ CreateEnvironmentDialog > expands custom commands accordion and shows SSH command field  637ms
+   ✓ CreateEnvironmentDialog > shows SSH command field in custom commands accordion  666ms
+   ✓ CreateEnvironmentDialog > switches to HTTP command type and shows URL field  1295ms
+   ✓ CreateEnvironmentDialog > expands upgrade configuration accordion  650ms
+   ✓ CreateEnvironmentDialog > shows upgrade fields when enable version upgrades is toggled on  1897ms
+   ✓ CreateEnvironmentDialog > updates authentication method to key and shows private key field  997ms
+   ✓ CreateEnvironmentDialog > updates description field  1219ms
+   ✓ CreateEnvironmentDialog > updates health check validation type  1244ms
+   ✓ CreateEnvironmentDialog > changes SSH command in custom commands accordion  756ms
+   ✓ CreateEnvironmentDialog > shows HTTP URL field in custom commands accordion after switching to HTTP  1139ms
+   ✓ CreateEnvironmentDialog > changes headers JSON in HTTP restart command section  1799ms
+   ✓ CreateEnvironmentDialog > changes upgrade SSH commands in upgrade accordion  2049ms
+   ✓ CreateEnvironmentDialog > switches upgrade command to HTTP type  2257ms
+   ✓ CreateEnvironmentDialog > updates version list URL  2101ms
+stderr | src/components/environments/__tests__/EnvironmentForm.test.tsx > EnvironmentForm > handleHttpRestartChange updates form data
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/EnvironmentForm.test.tsx (25 tests) 37816ms
+   ✓ EnvironmentForm > should render empty form in create mode  1670ms
+   ✓ EnvironmentForm > should render form with initial values in edit mode  1512ms
+   ✓ EnvironmentForm > should validate required fields  1352ms
+   ✓ EnvironmentForm > should handle form submission  6573ms
+   ✓ EnvironmentForm > should handle cancel  527ms
+   ✓ EnvironmentForm > should handle SSH control toggle  1111ms
+   ✓ EnvironmentForm > should show all configuration sections  419ms
+   ✓ EnvironmentForm > should handle SSH authentication type changes  1554ms
+   ✓ EnvironmentForm > should disable form fields when submitting  597ms
+   ✓ EnvironmentForm > should toggle health check accordion via switch  1072ms
+   ✓ EnvironmentForm > should show health check fields when enabled  1096ms
+   ✓ EnvironmentForm > should show health check disabled text when health check is off  358ms
+   ✓ EnvironmentForm > should show restart disabled text when restart is toggled off  456ms
+   ✓ EnvironmentForm > should show restart SSH command field when SSH is enabled and restart enabled  1533ms
+   ✓ EnvironmentForm > should show upgrade config fields when upgrade is enabled  778ms
+   ✓ EnvironmentForm > should show JSONPath field when upgrade is enabled  1553ms
+   ✓ EnvironmentForm > should show upgrade command type selector when upgrade is enabled  1586ms
+   ✓ EnvironmentForm > should show SSH upgrade command when SSH enabled and upgrade enabled  1758ms
+   ✓ EnvironmentForm > should update SSH host input  4622ms
+   ✓ EnvironmentForm > should update SSH username input  2853ms
+   ✓ EnvironmentForm > shows error when error prop provided  380ms
+   ✓ EnvironmentForm > initializes from edit mode data with SSH enabled  997ms
+   ✓ EnvironmentForm > shows HTTP upgrade config when upgrade enabled without SSH  819ms
+   ✓ EnvironmentForm > handleHttpUpgradeChange updates form data  1926ms
+   ✓ EnvironmentForm > handleHttpRestartChange updates form data  709ms
+stderr | src/pages/__tests__/OtherPages.test.tsx > EditEnvironment page > shows loading spinner while fetching
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > EditEnvironment page > renders edit form when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > EditEnvironment page > shows environment not found when environment missing
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/OtherPages.test.tsx > EditEnvironment page > shows environment name in heading when loaded
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/OtherPages.test.tsx (10 tests) 7911ms
+   ✓ CreateEnvironment page > renders create environment heading  754ms
+   ✓ CreateEnvironment page > renders the environment form  627ms
+   ✓ CreateEnvironment page > calls environmentApi.create on form submission  5242ms
+   ✓ EditEnvironment page > renders edit form when loaded  491ms
+   ✓ EditEnvironment page > shows environment name in heading when loaded  453ms
+stderr | src/pages/__tests__/EditEnvironmentCoverage.test.tsx > EditEnvironment page coverage > submits the update form
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > does not render content when closed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > renders dialog title when open
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows loading while fetching versions
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows error when versions fetch fails
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows no versions available when list is empty
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows version list when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows version list when loaded
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows current app version
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > calls onClose when Cancel is clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > does not fetch versions when upgradeConfig is disabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > proceeds to confirmation step on Upgrade click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > proceeds to confirmation step on Upgrade click
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > proceeds to confirmation step on Upgrade click
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > calls onUpgrade and onClose on confirm
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > calls onUpgrade and onClose on confirm
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > calls onUpgrade and onClose on confirm
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows confirmation step after version selected and continue clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows confirmation step after version selected and continue clicked
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/pages/__tests__/EditEnvironmentCoverage.test.tsx > EditEnvironment page coverage > shows error on failed update
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows confirmation step after version selected and continue clicked
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Back button in confirmation step
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Back button in confirmation step
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Back button in confirmation step
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Confirm Upgrade button text
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows info alert when a version is selected
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows info alert when a version is selected
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/pages/__tests__/EditEnvironmentCoverage.test.tsx > EditEnvironment page coverage > submits with password
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows info alert when a version is selected
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Upgrade details in confirmation step
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Upgrade details in confirmation step
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+stderr | src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx > UpgradeEnvironmentDialog > shows Upgrade details in confirmation step
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+MUI: The value provided to Autocomplete is invalid.
+None of the options match with `""`.
+You can use the `isOptionEqualToValue` prop to customize the equality test.
+
+ ✓ src/pages/__tests__/EditEnvironmentCoverage.test.tsx (3 tests) 4645ms
+   ✓ EditEnvironment page coverage > submits the update form  2875ms
+   ✓ EditEnvironment page coverage > shows error on failed update  947ms
+   ✓ EditEnvironment page coverage > submits with password  819ms
+ ✓ src/components/environments/__tests__/UpgradeEnvironmentDialog.test.tsx (17 tests) 3764ms
+   ✓ UpgradeEnvironmentDialog > proceeds to confirmation step on Upgrade click  384ms
+   ✓ UpgradeEnvironmentDialog > shows confirmation step after version selected and continue clicked  481ms
+   ✓ UpgradeEnvironmentDialog > reaches confirmation step by selecting a version via userEvent  634ms
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows loading spinner initially
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > renders users management heading
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > renders user list
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows error when users cannot be loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > has create user button
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows role chips for users
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows active/disabled status chips
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > opens create dialog on button click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > renders table headers
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > opens edit dialog when edit icon clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > creates a user successfully
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows delete confirmation dialog
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > deletes user when confirmed in dialog
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > closes delete dialog on cancel
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders URL field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > opens reset password dialog when key icon clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Users.test.tsx > Users page > shows last login as Never when not set
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders method selector
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders headers field with initial value
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders body field when showBody is true (default)
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/Users.test.tsx (16 tests) 2726ms
+   ✓ Users page > creates a user successfully  376ms
+   ✓ Users page > closes delete dialog on cancel  435ms
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > hides body field when showBody is false
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > calls onChange when URL is changed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > calls onChange when body is changed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > updates headers when valid JSON is entered
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > shows error when invalid JSON entered for headers
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > clears headers when empty string entered
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > shows error when JSON array entered for headers
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders with custom URL label
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > renders with required fields
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/HttpRequestConfig.test.tsx > HttpRequestConfig > initializes headers text from data.headers prop
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/HttpRequestConfig.test.tsx (14 tests) 2440ms
+   ✓ HttpRequestConfig > renders URL field  455ms
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > renders logs page heading
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows loading spinner while fetching
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > renders log entries when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows empty state when no logs
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows error alert when fetch fails
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > has search field
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > has refresh button
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > renders multiple log entries
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows environment name in log entry
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows expand icon for logs with details
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > expands details panel when expand button clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows dash when no environment name
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows column headers
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Logs.test.tsx > Logs page > shows pagination component
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/Logs.test.tsx (14 tests) 2112ms
+   ✓ Logs page > renders logs page heading  580ms
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > does not render content when closed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > renders dialog title when open
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > shows environment name
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > shows warning when restart is disabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > shows Continue button when restart is enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > proceeds to confirmation step on Continue click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > calls onRestart and onClose on confirm
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > can go back from confirmation step
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > shows command preview for SSH
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > calls onClose when Cancel button clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx > RestartEnvironmentDialog > calls onRestart with force=true when force restart checked
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/RestartEnvironmentDialog.test.tsx (11 tests) 1601ms
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should render environment information correctly
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should display correct health status color
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should handle environment URL click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should open menu on more button click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should show upgrade option when upgrade is enabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should disable upgrade option when upgrade is disabled
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should display unknown status correctly
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should display system info when available
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > should truncate long descriptions
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > shows upgrade option as disabled when upgrade not configured
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentCard.test.tsx > EnvironmentCard > opens restart dialog when restart is configured
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/EnvironmentCard.test.tsx (11 tests) 1738ms
+   ✓ EnvironmentCard > opens restart dialog when restart is configured  368ms
+stderr | src/pages/__tests__/Login.test.tsx > Login page > renders login form elements
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > sign in button is disabled when fields are empty
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > sign in button enables when both fields have values
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > updates username field on input
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > updates password field on input
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > toggles password visibility on icon button click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > shows error alert on failed login
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > shows generic error when no specific message
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > navigates to dashboard on successful login
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Login.test.tsx > Login page > stores user in localStorage on successful login
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/Login.test.tsx (10 tests) 1776ms
+   ✓ Login page > renders login form elements  465ms
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows loading spinner while fetching
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows error when fetch fails
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows no logs message when empty
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > renders log entries when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows filter chips
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > filters logs by level when chip is clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > filters logs by search text
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows no match message when filter yields no results
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows column headers
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > shows footer count
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > expands log details on click when details exist
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/environments/__tests__/EnvironmentLogs.test.tsx > EnvironmentLogs > resets to all filter on all chip click
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/environments/__tests__/EnvironmentLogs.test.tsx (12 tests) 1783ms
+   ✓ EnvironmentLogs > renders log entries when loaded  321ms
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > shows loading spinner while fetching
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > shows error when environment not found
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > renders environment name when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > shows health status chip
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > has back to dashboard button on error
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > renders environment URL when available
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > shows unhealthy status
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/EnvironmentDetails.test.tsx > EnvironmentDetails page > shows unknown status
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/EnvironmentDetails.test.tsx (8 tests) 1236ms
+ ✓ src/contexts/__tests__/WebSocketContext.test.tsx (12 tests) 790ms
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > shows loading skeletons while fetching
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > renders environments when loaded
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > shows empty state when no environments
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > shows error when fetch fails
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > shows stat cards with counts
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > navigates to create environment on "New Environment" click
+WebSocket: no auth token available, skipping connection
+
+stderr | src/pages/__tests__/Dashboard.test.tsx > Dashboard page > navigates to create on empty state button click
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/pages/__tests__/Dashboard.test.tsx (7 tests) 1204ms
+   ✓ Dashboard page > renders environments when loaded  325ms
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > renders nothing when confirmDialog is null
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > renders dialog when confirmDialog state is set
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > shows Cancel and Confirm buttons
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > calls onConfirm when Confirm button is clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > closes dialog when Cancel is clicked
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > closes dialog after confirm
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/ConfirmDialog.test.tsx > ConfirmDialog > handles onConfirm being undefined gracefully
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/common/__tests__/ConfirmDialog.test.tsx (7 tests) 534ms
+stderr | src/layouts/__tests__/MainLayout.test.tsx > MainLayout > redirects to login when no auth token
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/layouts/__tests__/MainLayout.test.tsx (7 tests) 1034ms
+   ✓ MainLayout > renders the app bar  365ms
+ ✓ src/components/common/__tests__/NotificationPopover.test.tsx (10 tests) 817ms
+stderr | src/components/common/__tests__/Logo.test.tsx > Logo > renders logo image
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > Logo > applies custom size
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > Logo > applies filter when non-default color is passed
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > Logo > does not apply filter for default color
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > LogoWithText > renders logo with text
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > LogoWithText > renders logo image within LogoWithText
+WebSocket: no auth token available, skipping connection
+
+stderr | src/components/common/__tests__/Logo.test.tsx > LogoWithText > applies custom size to logo
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/components/common/__tests__/Logo.test.tsx (7 tests) 148ms
+ ✓ src/hooks/__tests__/useEnvironmentActions.test.ts (11 tests) 92ms
+stderr | src/__tests__/App.test.tsx > App > renders without crashing
+WebSocket: no auth token available, skipping connection
+⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+stderr | src/__tests__/App.test.tsx > App > wraps app routes in providers
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/__tests__/App.test.tsx (2 tests) 84ms
+stderr | src/routes/__tests__/AppRoutes.test.tsx > AppRoutes > renders without crashing
+WebSocket: no auth token available, skipping connection
+
+stderr | src/routes/__tests__/AppRoutes.test.tsx > AppRoutes > renders login page at /login route when not authenticated
+WebSocket: no auth token available, skipping connection
+
+stderr | src/routes/__tests__/AppRoutes.test.tsx > AppRoutes > renders login page by default (unauthenticated)
+WebSocket: no auth token available, skipping connection
+
+ ✓ src/routes/__tests__/AppRoutes.test.tsx (3 tests) 89ms
+ ✓ src/api/__tests__/interceptors.test.ts (7 tests) 40ms
+ ✓ src/hooks/__tests__/useNotifications.test.ts (8 tests) 82ms
+ ✓ src/store/slices/__tests__/environmentSlice.test.ts (16 tests) 23ms
+ ✓ src/api/__tests__/environments.test.ts (11 tests) 21ms
+ ✓ src/api/__tests__/users.test.ts (8 tests) 16ms
+ ✓ src/store/slices/__tests__/logsSlice.test.ts (5 tests) 15ms
+ ✓ src/store/slices/__tests__/uiSlice.test.ts (10 tests) 12ms
+ ✓ src/store/slices/__tests__/notificationSlice.test.ts (10 tests) 13ms
+
+ Test Files  31 passed (31)
+      Tests  341 passed (341)
+   Start at  04:26:40
+   Duration  122.69s (transform 2.01s, setup 8.90s, collect 179.66s, tests 133.93s, environment 20.82s, prepare 4.25s)
+
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   92.67 |    79.53 |   69.39 |   92.67 |
+ src               |     100 |      100 |     100 |     100 |
+  App.tsx          |     100 |      100 |     100 |     100 |
+ src/api           |     100 |      100 |     100 |     100 |
+  environments.ts  |     100 |      100 |     100 |     100 |
+  users.ts         |     100 |      100 |     100 |     100 |
+ ...ponents/common |    94.4 |    86.04 |      90 |    94.4 |
+  ...irmDialog.tsx |     100 |      100 |     100 |     100 |
+  Logo.tsx         |     100 |      100 |     100 |     100 |
+  ...onPopover.tsx |   92.62 |    81.25 |      80 |   92.62 | 52,54,58,64-76
+ ...s/environments |   89.71 |    81.37 |   60.12 |   89.71 |
+  ...entDialog.tsx |   91.98 |    82.45 |   71.42 |   91.98 | ...40-645,657-662
+  ...entDialog.tsx |   84.15 |    69.81 |   45.71 |   84.15 | ...41-646,658-663
+  ...nmentCard.tsx |    96.3 |    68.75 |    37.5 |    96.3 | 90-96,101-103
+  ...nmentForm.tsx |   83.21 |    85.18 |   47.36 |   83.21 | ...20,736,746-763
+  ...nmentLogs.tsx |   99.45 |    93.47 |    87.5 |   99.45 | 128
+  ...estConfig.tsx |   98.05 |    90.47 |   85.71 |   98.05 | 46-47
+  ...entDialog.tsx |   94.35 |    81.08 |     100 |   94.35 | 65-75,158-163
+  ...entDialog.tsx |   92.75 |    73.68 |   83.33 |   92.75 | 65-67,82-100,201
+  index.ts         |     100 |      100 |     100 |     100 |
+ src/contexts      |   93.44 |     86.2 |     100 |   93.44 |
+  ...etContext.tsx |   93.44 |     86.2 |     100 |   93.44 | ...38-140,146-147
+ src/hooks         |     100 |      100 |   94.44 |     100 |
+  ...entActions.ts |     100 |      100 |   93.75 |     100 |
+  ...ifications.ts |     100 |      100 |     100 |     100 |
+ src/layouts       |   94.75 |    17.14 |      25 |   94.75 |
+  MainLayout.tsx   |   94.75 |    17.14 |      25 |   94.75 | ...14-115,118-119
+ src/pages         |   93.44 |    76.03 |   64.47 |   93.44 |
+  ...vironment.tsx |   96.15 |    57.14 |      80 |   96.15 | 38-39
+  Dashboard.tsx    |     100 |    94.11 |     100 |     100 | 143
+  ...vironment.tsx |   91.95 |    85.71 |     100 |   91.95 | 44-50
+  ...ntDetails.tsx |   89.82 |    64.58 |   54.54 |   89.82 | ...29,442,477-490
+  Login.tsx        |     100 |      100 |     100 |     100 |
+  Logs.tsx         |    99.6 |    79.31 |   46.15 |    99.6 | 176
+  NotFound.tsx     |   93.54 |      100 |      50 |   93.54 | 10-11
+  Users.tsx        |    85.6 |    68.51 |   56.66 |    85.6 | ...74-276,348-349
+ src/routes        |   94.87 |    66.66 |     100 |   94.87 |
+  index.tsx        |   94.87 |    66.66 |     100 |   94.87 | 23-24
+ src/store         |     100 |      100 |     100 |     100 |
+  index.ts         |     100 |      100 |     100 |     100 |
+ src/store/slices  |     100 |      100 |     100 |     100 |
+  ...nmentSlice.ts |     100 |      100 |     100 |     100 |
+  logsSlice.ts     |     100 |      100 |     100 |     100 |
+  ...ationSlice.ts |     100 |      100 |     100 |     100 |
+  uiSlice.ts       |     100 |      100 |     100 |     100 |
+ src/theme         |     100 |      100 |     100 |     100 |
+  index.ts         |     100 |      100 |     100 |     100 |
+ src/types         |     100 |      100 |     100 |     100 |
+  environment.ts   |     100 |      100 |     100 |     100 |
+-------------------|---------|----------|---------|---------|-------------------

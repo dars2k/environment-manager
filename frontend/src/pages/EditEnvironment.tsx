@@ -63,7 +63,11 @@ export const EditEnvironment: React.FC = () => {
 
   const handleSubmit = async (data: CreateEnvironmentRequest, password?: string, privateKey?: string) => {
     setError(null);
-    await updateMutation.mutateAsync({ data, password, privateKey });
+    try {
+      await updateMutation.mutateAsync({ data, password, privateKey });
+    } catch (err) {
+      // Error handled by mutation's onError
+    }
   };
 
   if (loadingEnvironment) {
