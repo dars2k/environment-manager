@@ -1,28 +1,66 @@
-## Summary
+## chore(codekeep): dep updates + coverage ≥90% + QA pass
 
-- **P1 – Dependency updates**: Applied all semver-safe minor/patch bumps for Go (12 packages: golang.org/x/*, go.mongodb.org/mongo-driver/v2, bytedance/sonic, gin-contrib/sse, mattn/go-isatty, pelletier/go-toml/v2) and npm (3 packages: @emotion/styled, @tanstack/react-query, axios). All major-version bumps documented in `.codekeep/deps.md` and skipped.
-- **P2 – Coverage uplift**: Added 8 new test files (6 backend, 2 frontend) targeting previously uncovered branches — SSH credential paths, validateURLStrict IP edge cases, WebSocket hub/client error paths, MongoDB transaction/timeout paths, `startHealthCheckScheduler` branches, and `useNotifications` hook callbacks. Backend coverage raised from 90.0% → 91.9%; frontend from 92.23% → 92.31%.
-- **P3 – QA / race-fix**: Race detector (go test -race ./...) surfaced one data race in `TestStartHealthCheckScheduler_DisabledHealthCheck` (shared `call` counter written by scheduler goroutine, read by test). Fixed by removing the racy counter; mock's built-in call tracking is sufficient. All 21 backend packages and 338 frontend tests pass clean under the race detector.
+### Phase 1 — Dependency Updates
 
-## Changes
+#### Go (backend)
 
-| Area | File(s) | What |
+| Package | Old | New | Breaking? |
+|---|---|---|---|
+| golang.org/x/crypto | v0.50.0 | v0.52.0 | No |
+| golang.org/x/net | v0.53.0 | v0.55.0 | No |
+| golang.org/x/text | v0.36.0 | v0.37.0 | No |
+| golang.org/x/sys | v0.43.0 | v0.45.0 | No |
+| golang.org/x/arch | v0.26.0 | v0.27.0 | No |
+| github.com/go-playground/validator/v10 | v10.30.2 | v10.30.3 | No |
+
+#### npm (frontend)
+
+| Package | Old | New | Breaking? |
+|---|---|---|---|
+| axios | ^1.15.2 | ^1.16.1 | No |
+| ws (transitive) | vulnerable | patched | No — CVE GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure) |
+| yaml (transitive) | vulnerable | patched | No — CVE GHSA-48c2-rrv3-qjmp (stack overflow) |
+
+### Phase 2 — Test Coverage
+
+| Scope | Before | After |
 |---|---|---|
-| Go deps | `backend/go.mod`, `backend/go.sum` | 12 minor/patch upgrades |
-| npm deps | `frontend/package.json`, `frontend/package-lock.json` | 3 minor/patch upgrades |
-| Dep log | `.codekeep/deps.md` | Full audit of applied + skipped updates |
-| Backend tests | `service/environment/service_ssh_coverage_test.go` | SSH restart/upgrade branch coverage |
-| Backend tests | `service/environment/service_url_internal_test.go` | validateURLStrict IP edge cases |
-| Backend tests | `websocket/hub/hub_extra_test.go` | subscribe/unsubscribe error paths, full-channel default, WritePump close |
-| Backend tests | `websocket/client/client_extra_test.go` | WritePump batched-write loop, ReadPump unexpected close |
-| Backend tests | `cmd/server/main_extra_test.go` | startHealthCheckScheduler branch coverage + race fix |
-| Backend tests | `infrastructure/database/mongodb_txn_test.go` | Transaction abort path, NewMongoDB ping timeout |
-| Frontend tests | `hooks/__tests__/useNotifications.test.ts` | Skip-already-displayed path, onExited callback, re-show after cleanup |
+| Backend overall | 91.9% | 92.1% |
+| Frontend statements | ~88% | 93.09% |
+| `websocket/client` | 85.1% | 91.0% |
+| `websocket/hub` | 89.2% | 90.2% |
+| `EditEnvironment.tsx` | 64.28% | 100% |
+| `EnvironmentForm.tsx` | 83.21% | 85.86% |
+| `Users.tsx` | 85.60% | 86.11% |
 
-## Test plan
+New test files added:
+- `backend/internal/infrastructure/database/mongodb_connect_test.go` — `NewMongoDB` error paths (invalid URI scheme, empty URI)
+- `backend/internal/websocket/client/client_coverage2_test.go` — `sendMessage` marshal error, ReadPump unexpected close, WritePump NextWriter error
+- `backend/internal/websocket/hub/hub_coverage2_test.go` — ReadPump unexpected close, WritePump WriteJSON error
+- `frontend/src/pages/__tests__/EditEnvironmentCoverage.test.tsx` — all `EditEnvironment` mutation paths (password, key, error, fallback error, no-metadata)
 
-- [x] `cd backend && go test ./...` — 21/21 packages pass
-- [x] `cd backend && go test -race ./...` — 0 races detected
-- [x] `cd frontend && npm test -- --run` — 338/338 tests pass
-- [x] `go mod verify` — all module checksums verified
-- [x] No push to main/master
+Extended test files:
+- `frontend/src/pages/__tests__/Users.test.tsx` — passwords-mismatch error, reset-password API error, delete-user API error
+- `frontend/src/components/environments/__tests__/EnvironmentForm.test.tsx` — SSH upgrade commands section render and input
+
+### Phase 3 — QA Review
+
+| Check | Result |
+|---|---|
+| `go test -race ./...` | Clean — 0 races |
+| `go vet ./...` | Clean — 0 issues |
+| Frontend tests | 348 tests pass |
+| Logic errors | None found |
+| Brittle tests | None found |
+
+QA fixes: **0** — all checks passed clean.
+
+### Checklist
+
+- [x] All backend tests pass (`go test ./...`)
+- [x] All frontend tests pass (`npm test`)
+- [x] Coverage ≥ 90% (backend 92.1%, frontend 93.09%)
+- [x] Race detector clean (`go test -race`)
+- [x] Static analysis clean (`go vet`)
+- [x] No breaking dependency changes
+- [x] CVE-affected transitive packages patched

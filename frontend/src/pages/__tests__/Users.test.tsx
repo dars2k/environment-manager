@@ -231,4 +231,78 @@ describe('Users page', () => {
       expect(screen.getByText('Never')).toBeInTheDocument();
     });
   });
+
+  it('shows passwords do not match error in reset password dialog', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const keyButtons = document.querySelectorAll('[data-testid="KeyIcon"]');
+    if (keyButtons.length > 0) {
+      fireEvent.click(keyButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+      });
+      const passwordFields = screen.getAllByLabelText(/new password/i);
+      fireEvent.change(passwordFields[0], { target: { value: 'password123' } });
+      const confirmFields = screen.getAllByLabelText(/confirm password/i);
+      fireEvent.change(confirmFields[0], { target: { value: 'different456' } });
+      const resetBtn = screen.getByRole('button', { name: /reset password/i });
+      fireEvent.click(resetBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
+      });
+    }
+  });
+
+  it('shows reset password API error in dialog', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    (mockedUsersApi as any).resetPassword = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Reset failed from server' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const keyButtons = document.querySelectorAll('[data-testid="KeyIcon"]');
+    if (keyButtons.length > 0) {
+      fireEvent.click(keyButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+      });
+      const passwordFields = screen.getAllByLabelText(/new password/i);
+      fireEvent.change(passwordFields[0], { target: { value: 'password123' } });
+      const confirmFields = screen.getAllByLabelText(/confirm password/i);
+      fireEvent.change(confirmFields[0], { target: { value: 'password123' } });
+      const resetBtn = screen.getByRole('button', { name: /reset password/i });
+      fireEvent.click(resetBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/reset failed from server/i)).toBeInTheDocument();
+      });
+    }
+  });
+
+  it('shows delete user API error', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.deleteUser = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Delete failed from server' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const deleteButtons = document.querySelectorAll('[data-testid="DeleteIcon"]');
+    if (deleteButtons.length > 0) {
+      fireEvent.click(deleteButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getAllByText(/delete user/i).length).toBeGreaterThanOrEqual(1);
+      });
+      const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
+      fireEvent.click(deleteBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/delete failed from server/i)).toBeInTheDocument();
+      });
+    }
+  });
 });

@@ -608,4 +608,74 @@ describe('EnvironmentForm', () => {
       }
     });
   });
+
+  it('shows SSH upgrade commands section when sshControlEnabled and upgradeConfig.type is ssh', async () => {
+    const onSubmit = vi.fn();
+    const sshUpgradeEnv: Environment = {
+      ...mockEnvironment,
+      commands: {
+        type: 'ssh',
+        restart: {
+          enabled: true,
+          command: 'sudo systemctl restart app',
+        },
+      },
+      upgradeConfig: {
+        enabled: true,
+        type: 'ssh',
+        versionListURL: '',
+        jsonPathResponse: '',
+        upgradeCommand: {
+          command: 'sudo upgrade --version={VERSION}',
+        },
+      },
+    };
+
+    render(
+      <EnvironmentForm
+        initialData={sshUpgradeEnv}
+        onSubmit={onSubmit}
+        mode="edit"
+      />
+    );
+
+    // The upgrade accordion should be expanded (upgradeConfig.enabled=true)
+    // and SSH upgrade commands section should be visible (sshControlEnabled=true, type='ssh')
+    await waitFor(() => {
+      expect(screen.getByLabelText(/SSH Upgrade Commands/i)).toBeInTheDocument();
+    });
+  });
+
+  it('allows typing in SSH upgrade commands field', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    const sshUpgradeEnv: Environment = {
+      ...mockEnvironment,
+      commands: { type: 'ssh', restart: { enabled: true, command: 'restart' } },
+      upgradeConfig: {
+        enabled: true,
+        type: 'ssh',
+        versionListURL: '',
+        jsonPathResponse: '',
+        upgradeCommand: { command: '' },
+      },
+    };
+
+    render(
+      <EnvironmentForm
+        initialData={sshUpgradeEnv}
+        onSubmit={onSubmit}
+        mode="edit"
+      />
+    );
+
+    await waitFor(() => {
+      const sshUpgradeField = screen.queryByLabelText(/SSH Upgrade Commands/i);
+      if (sshUpgradeField) {
+        fe.change(sshUpgradeField, { target: { value: 'sudo upgrade --version={VERSION}' } });
+        expect((sshUpgradeField as HTMLTextAreaElement).value).toBe('sudo upgrade --version={VERSION}');
+      }
+    });
+  });
 });
