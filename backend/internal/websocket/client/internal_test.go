@@ -263,3 +263,116 @@ func TestSendOperationUpdate(t *testing.T) {
 		t.Fatal("expected operation_update message")
 	}
 }
+
+// TestReadPump_PongHandlerCalled exercises the pong handler set inside ReadPump
+// (the c.conn.SetPongHandler closure). The dialer sends a Pong control frame;
+// the gorilla library on the server side invokes the handler, covering lines 63-65.
+func TestReadPump_PongHandlerCalled(t *testing.T) {
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.ReadPump()
+	}()
+
+	// Allow ReadPump to start and install the PongHandler.
+	time.Sleep(30 * time.Millisecond)
+
+	// Send a Pong control frame from the dialer. The gorilla server will call
+	// the PongHandler registered by ReadPump, updating the read deadline.
+	err := dialConn.WriteControl(websocket.PongMessage, []byte("pong-data"), time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl pong: %v", err)
+	}
+	time.Sleep(60 * time.Millisecond)
+
+	// Close dialer to let ReadPump exit.
+	dialConn.Close()
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+	}
+}
+
+// TestReadPump_UnexpectedCloseCode exercises the IsUnexpectedCloseError log line
+// in ReadPump by sending a websocket close frame with a code that is NOT in the
+// expected list (CloseGoingAway, CloseAbnormalClosure). Using CloseInternalServerErr
+// (1011) makes IsUnexpectedCloseError return true, which runs the log.Printf line.
+func TestReadPump_UnexpectedCloseCode(t *testing.T) {
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.ReadPump()
+	}()
+
+	time.Sleep(30 * time.Millisecond)
+
+	// Send close with CloseInternalServerErr (1011) — not in the expected list.
+	closeMsg := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "test")
+	err := dialConn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl close: %v", err)
+	}
+
+	select {
+	case <-done:
+		// ReadPump exited after logging the unexpected close error.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("ReadPump did not exit after unexpected close code")
+	}
+}
+
+// TestWritePump_PingTicker exercises the ticker branch (lines ~116-120) of WritePump
+// by overriding pingPeriod to a very short value so the ticker fires quickly.
+func TestWritePump_PingTicker(t *testing.T) {
+	// Override pingPeriod for this test only.
+	original := pingPeriod
+	pingPeriod = 20 * time.Millisecond
+	t.Cleanup(func() { pingPeriod = original })
+
+	hub := &stubHub{}
+	c, dialConn, cleanup := newTestWSPair(t, hub)
+	defer cleanup()
+
+	// Set a pong handler on the dialer side so it responds to pings properly.
+	dialConn.SetPongHandler(func(appData string) error { return nil })
+
+	// Start WritePump; with pingPeriod=20ms the ticker will fire within ~50ms.
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		c.WritePump()
+	}()
+
+	// Allow at least one ticker tick and one ping frame.
+	// The dialer must read the ping frame; gorilla handles PingMessage automatically
+	// via PongHandler, but we also need the dialer to be reading.
+	dialConn.SetReadDeadline(time.Now().Add(200 * time.Millisecond))
+	go func() {
+		for {
+			_, _, err := dialConn.ReadMessage()
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	time.Sleep(80 * time.Millisecond)
+
+	// Close the dialer connection — WritePump should exit via the ping write error.
+	dialConn.Close()
+
+	select {
+	case <-done:
+		// WritePump exited cleanly after the ping error.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("WritePump did not exit after ping ticker test")
+	}
+}

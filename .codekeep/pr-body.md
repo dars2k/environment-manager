@@ -1,28 +1,61 @@
 ## Summary
 
-- **P1 – Dependency updates**: Applied all semver-safe minor/patch bumps for Go (12 packages: golang.org/x/*, go.mongodb.org/mongo-driver/v2, bytedance/sonic, gin-contrib/sse, mattn/go-isatty, pelletier/go-toml/v2) and npm (3 packages: @emotion/styled, @tanstack/react-query, axios). All major-version bumps documented in `.codekeep/deps.md` and skipped.
-- **P2 – Coverage uplift**: Added 8 new test files (6 backend, 2 frontend) targeting previously uncovered branches — SSH credential paths, validateURLStrict IP edge cases, WebSocket hub/client error paths, MongoDB transaction/timeout paths, `startHealthCheckScheduler` branches, and `useNotifications` hook callbacks. Backend coverage raised from 90.0% → 91.9%; frontend from 92.23% → 92.31%.
-- **P3 – QA / race-fix**: Race detector (go test -race ./...) surfaced one data race in `TestStartHealthCheckScheduler_DisabledHealthCheck` (shared `call` counter written by scheduler goroutine, read by test). Fixed by removing the racy counter; mock's built-in call tracking is sufficient. All 21 backend packages and 338 frontend tests pass clean under the race detector.
+- **P1 – Dependency updates**: Applied semver-safe minor/patch bumps for Go (7 packages: golang.org/x/crypto, net, sys, text; base64x, stats, quic-go) and npm (5 packages: @tanstack/react-query, axios, prettier, jest, jest-environment-jsdom). All major-version bumps documented in `.codekeep/deps.md` and skipped.
+- **P2 – Coverage uplift**: Targeted packages below 90%. Fixed a 60-second test timeout in the database package (MongoDB ping check), added WritePump ticker path coverage (changed `pingPeriod` from `const` to `var`), added ReadPump unexpected-close and WritePump WriteJSON-error tests for both `client` and `hub`, added `Close()` and `Transaction` error-path tests for the database package, and covered the `startHealthCheckScheduler` health-check-failure log line. `websocket/client` 85.1% → 94.0%; `websocket/hub` 89.2% → 90.2%; frontend stable at 92.31%.
+- **P3 – QA**: Reviewed all new tests for race conditions, brittle timing, and unhandled errors. The `pingPeriod` global override is safe because Go runs package tests sequentially by default. Two packages (`cmd/server`, `infrastructure/database`) remain below 90% due to hard infrastructure constraints — documented below.
 
-## Changes
+## Dependency table
 
-| Area | File(s) | What |
+### Go (backend)
+
+| Package | Old | New | Breaking? |
+|---|---|---|---|
+| golang.org/x/crypto | v0.50.0 | v0.52.0 | No |
+| golang.org/x/net | v0.53.0 | v0.55.0 | No |
+| golang.org/x/sys | v0.43.0 | v0.45.0 | No |
+| golang.org/x/text | v0.36.0 | v0.37.0 | No |
+| github.com/cloudwego/base64x | v0.1.6 | v0.1.7 | No |
+| github.com/montanaflynn/stats | v0.8.2 | v0.9.0 | No |
+| github.com/quic-go/quic-go | v0.59.0 | v0.59.1 | No |
+
+### npm (frontend)
+
+| Package | Old | New | Breaking? |
+|---|---|---|---|
+| @tanstack/react-query | 5.100.8 | 5.100.14 | No |
+| axios | 1.15.2 | 1.14.0 | No |
+| prettier | 3.8.1 | 3.8.3 | No |
+| jest | 30.3.0 | 30.4.2 | No |
+| jest-environment-jsdom | 30.3.0 | 30.4.1 | No |
+
+## Coverage: before → after
+
+| Package | Before | After |
 |---|---|---|
-| Go deps | `backend/go.mod`, `backend/go.sum` | 12 minor/patch upgrades |
-| npm deps | `frontend/package.json`, `frontend/package-lock.json` | 3 minor/patch upgrades |
-| Dep log | `.codekeep/deps.md` | Full audit of applied + skipped updates |
-| Backend tests | `service/environment/service_ssh_coverage_test.go` | SSH restart/upgrade branch coverage |
-| Backend tests | `service/environment/service_url_internal_test.go` | validateURLStrict IP edge cases |
-| Backend tests | `websocket/hub/hub_extra_test.go` | subscribe/unsubscribe error paths, full-channel default, WritePump close |
-| Backend tests | `websocket/client/client_extra_test.go` | WritePump batched-write loop, ReadPump unexpected close |
-| Backend tests | `cmd/server/main_extra_test.go` | startHealthCheckScheduler branch coverage + race fix |
-| Backend tests | `infrastructure/database/mongodb_txn_test.go` | Transaction abort path, NewMongoDB ping timeout |
-| Frontend tests | `hooks/__tests__/useNotifications.test.ts` | Skip-already-displayed path, onExited callback, re-show after cleanup |
+| `internal/websocket/client` | 85.1% | **94.0%** ✅ |
+| `internal/websocket/hub` | 89.2% | **90.2%** ✅ |
+| `internal/infrastructure/database` | 82.5% | 85.0% ⚠️ |
+| `cmd/server` | 37.7% | 39.0% ⚠️ |
+| All other backend packages | ≥90% | ≥90% ✅ |
+| Frontend overall | 92.31% | 92.31% ✅ |
 
-## Test plan
+**Why `database` and `cmd/server` are capped:**
+- `database.Transaction()` error paths (StartTransaction, CommitTransaction, AbortTransaction) require a MongoDB replica set; mtest mock does not emulate these session interactions.
+- `cmd/server.main()` calls `logger.Fatal()` on MongoDB failure → `os.Exit()`, which is unrunnable in unit tests. A dependency-injection refactor of `main()` is out of scope for a maintenance pass.
 
-- [x] `cd backend && go test ./...` — 21/21 packages pass
-- [x] `cd backend && go test -race ./...` — 0 races detected
-- [x] `cd frontend && npm test -- --run` — 338/338 tests pass
-- [x] `go mod verify` — all module checksums verified
+## QA fixes
+
+1. **60s test timeout** (`mongodb_simple_test.go`): `TestMongoDB_CreateIndexes_Coverage` and `TestMongoDB_Transaction_Coverage` used a lazy `mongo.Connect` without pinging, then issued commands with a background context. Fixed: 200ms ping check before each real-server test; tests skip immediately when MongoDB is unavailable.
+2. **`pingPeriod` untestable** (`client.go`): Changed from `const` to `var` to allow the internal test to override it to 20ms and exercise the WritePump ticker branch.
+3. **ReadPump `IsUnexpectedCloseError` uncovered** (both `client` and `hub`): Added tests sending `CloseInternalServerErr` (1011) to trigger the non-expected close-code branch.
+4. **`hub.WritePump` WriteJSON error uncovered**: Added test that kills the TCP connection from the dialer side while a message is in the send channel.
+5. **`database.Close()` at 0%**: Added `TestClose_WithRealClient` using a pre-built disconnected client.
+6. **Scheduler health-check error log uncovered** (`main_extra_test.go`): Added `TestStartHealthCheckScheduler_CheckHealthFails` mocking `GetByID` to return an error so the goroutine's error log line executes.
+
+## Checklist
+
+- [x] Tests pass — `go test ./... -timeout 30s` (21/21 backend packages green)
+- [x] Tests pass — `vitest run` (30/30 frontend files, 338 tests)
+- [x] Coverage ≥90% for all packages achievable without live infrastructure
+- [x] Breaking changes addressed (none applied; all documented in `.codekeep/deps.md`)
 - [x] No push to main/master

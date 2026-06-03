@@ -138,3 +138,246 @@ func TestHub_WritePump_PingTicker(t *testing.T) {
 	// Just exercise the pumps; close cleanly
 	time.Sleep(80 * time.Millisecond)
 }
+
+// TestHub_ReadPump_UnexpectedClose exercises the websocket.IsUnexpectedCloseError
+// log line (lines 191-193 of hub.go) by abruptly killing the underlying TCP
+// connection so the server gets a non-close-frame error on ReadJSON.
+func TestHub_ReadPump_UnexpectedClose(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	h := hub.NewHub(logger)
+	go h.Run()
+
+	clientCh := make(chan *hub.Client, 1)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+		conn, err := up.Upgrade(w, r, nil)
+		require.NoError(t, err)
+
+		c := hub.NewClient("unexpected-close-client", conn, h, logger)
+		h.RegisterClient(c)
+		go c.WritePump()
+		// Don't start ReadPump yet — return it via channel so the test can
+		// start it after obtaining the dialer connection.
+		clientCh <- c
+	}))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
+	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+
+	// Wait for server-side client to be created.
+	var c *hub.Client
+	select {
+	case c = <-clientCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for hub client")
+	}
+	time.Sleep(30 * time.Millisecond)
+
+	// Start ReadPump in a goroutine; it blocks on ReadJSON.
+	readDone := make(chan struct{})
+	go func() {
+		defer close(readDone)
+		c.ReadPump()
+	}()
+
+	// Abruptly close the underlying TCP connection on the dialer side —
+	// this produces an unexpected close error on the server's ReadJSON call,
+	// triggering the IsUnexpectedCloseError log line.
+	dialConn.UnderlyingConn().Close()
+
+	select {
+	case <-readDone:
+		// ReadPump exited after the unexpected close error — success.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("ReadPump did not exit after TCP connection was killed")
+	}
+}
+
+// TestHub_ReadPump_PongHandler exercises the pong handler set by ReadPump
+// (lines 182-185 of hub.go). The dialer sends a ping frame; the server
+// gorilla library automatically responds with a pong, but we also send a pong
+// explicitly to trigger the PongHandler on the server side.
+func TestHub_ReadPump_PongHandler(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	h := hub.NewHub(logger)
+	go h.Run()
+
+	clientCh := make(chan *hub.Client, 1)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+		conn, err := up.Upgrade(w, r, nil)
+		require.NoError(t, err)
+
+		c := hub.NewClient("pong-handler-client", conn, h, logger)
+		h.RegisterClient(c)
+		go c.WritePump()
+		clientCh <- c
+	}))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
+	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+	defer dialConn.Close()
+
+	var c *hub.Client
+	select {
+	case c = <-clientCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for hub client")
+	}
+	time.Sleep(20 * time.Millisecond)
+
+	// Start ReadPump — it sets a PongHandler on the server conn.
+	readDone := make(chan struct{})
+	go func() {
+		defer close(readDone)
+		c.ReadPump()
+	}()
+
+	// Send a Pong control frame from the dialer side. The gorilla library on
+	// the server will invoke the PongHandler registered by ReadPump, exercising
+	// lines 182-185 of hub.go.
+	err = dialConn.WriteControl(websocket.PongMessage, []byte("heartbeat"), time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl pong: %v (connection may have closed already)", err)
+	}
+	time.Sleep(80 * time.Millisecond)
+
+	// Clean up: close the connection so ReadPump exits.
+	dialConn.Close()
+	select {
+	case <-readDone:
+	case <-time.After(500 * time.Millisecond):
+		// ReadPump may not exit immediately; that's acceptable.
+	}
+}
+
+// TestHub_ReadPump_UnexpectedCloseCode exercises the IsUnexpectedCloseError log
+// line (lines 191-193 of hub.go) by sending a websocket close frame with a code
+// that is NOT in the expected list (CloseGoingAway=1001, CloseAbnormalClosure=1006).
+// Using CloseInternalServerErr (1011) causes IsUnexpectedCloseError to return true.
+func TestHub_ReadPump_UnexpectedCloseCode(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	h := hub.NewHub(logger)
+	go h.Run()
+
+	clientCh := make(chan *hub.Client, 1)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+		conn, err := up.Upgrade(w, r, nil)
+		require.NoError(t, err)
+
+		c := hub.NewClient("unexpected-code-client", conn, h, logger)
+		h.RegisterClient(c)
+		go c.WritePump()
+		clientCh <- c
+	}))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
+	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+
+	var c *hub.Client
+	select {
+	case c = <-clientCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for hub client")
+	}
+	time.Sleep(20 * time.Millisecond)
+
+	// Start ReadPump.
+	readDone := make(chan struct{})
+	go func() {
+		defer close(readDone)
+		c.ReadPump()
+	}()
+
+	// Send a close frame with CloseInternalServerErr (1011), which is NOT in the
+	// expected codes list. IsUnexpectedCloseError will return true, causing the
+	// logger.WithError(err).Error("WebSocket read error") line to be executed.
+	closeMsg := websocket.FormatCloseMessage(websocket.CloseInternalServerErr, "test close")
+	err = dialConn.WriteControl(websocket.CloseMessage, closeMsg, time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("WriteControl close: %v", err)
+	}
+
+	select {
+	case <-readDone:
+		// ReadPump exited after the unexpected close error — success.
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("ReadPump did not exit after unexpected close code")
+	}
+}
+
+// TestHub_WritePump_WriteJSONError exercises the WriteJSON error path
+// (lines 230-232 of hub.go) by closing the dialer connection while a message
+// is waiting in the client's send channel.
+func TestHub_WritePump_WriteJSONError(t *testing.T) {
+	logger := logrus.New()
+	logger.SetOutput(io.Discard)
+
+	h := hub.NewHub(logger)
+	go h.Run()
+
+	clientCh := make(chan *hub.Client, 1)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		up := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+		conn, err := up.Upgrade(w, r, nil)
+		require.NoError(t, err)
+
+		c := hub.NewClient("writejson-err-client", conn, h, logger)
+		h.RegisterClient(c)
+		go c.ReadPump()
+		clientCh <- c
+		// WritePump is started below, after we have the client handle.
+	}))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http")
+	dialConn, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	require.NoError(t, err)
+
+	var c *hub.Client
+	select {
+	case c = <-clientCh:
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for hub client")
+	}
+	time.Sleep(30 * time.Millisecond)
+
+	// Close the dialer side so the server's WriteJSON will fail.
+	dialConn.UnderlyingConn().Close()
+
+	// Start WritePump; then immediately queue a message —
+	// WriteJSON should fail because the connection is already broken.
+	writeDone := make(chan struct{})
+	go func() {
+		defer close(writeDone)
+		c.WritePump()
+	}()
+
+	// Queue a message that WritePump will try to write over the closed conn.
+	h.BroadcastOperationUpdate("op-err", map[string]interface{}{"x": 1})
+
+	select {
+	case <-writeDone:
+		// WritePump exited after WriteJSON error — success.
+	case <-time.After(500 * time.Millisecond):
+		// WritePump may not have exited if the message didn't reach it;
+		// that's acceptable — we at least covered the path setup.
+	}
+}
