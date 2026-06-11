@@ -60,15 +60,6 @@ func validateUsername(username interface{}) (string, error) {
 	return str, nil
 }
 
-// sanitizeForMongoDB provides an additional layer of sanitization specifically for MongoDB queries
-// This function ensures that the input is safe to use in MongoDB queries by escaping any special characters
-func sanitizeForMongoDB(input string) string {
-	// Since we already validated that the username contains only alphanumeric characters,
-	// there's nothing to escape. This function exists to make the security intent explicit.
-	// MongoDB special characters like $, ., etc. are already excluded by our validation.
-	return input
-}
-
 // Create inserts a new user
 func (r *userRepository) Create(ctx context.Context, user *entities.User) error {
 	user.CreatedAt = time.Now()
@@ -101,20 +92,10 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*e
 		return nil, fmt.Errorf("invalid username: %w", err)
 	}
 
-	// Additional sanitization layer for MongoDB - this is redundant but makes security explicit
-	sanitizedUsername := sanitizeForMongoDB(validatedUsername)
-
-	// SECURITY: sanitizedUsername has been validated and sanitized:
-	// 1. validateUsername ensures only alphanumeric characters
-	// 2. sanitizeForMongoDB provides MongoDB-specific safety
-	// This double-validation prevents any NoSQL injection attacks
 	var user entities.User
 	
 	// Use the fully validated and sanitized username in the query
-	// This is completely safe from injection attacks
-	query := bson.D{{Key: "username", Value: sanitizedUsername}}
-	// CodeQL[go/sql-injection] False positive: Input has been thoroughly validated and sanitized above
-	// Only alphanumeric characters are allowed through validateUsername() function
+	query := bson.D{{Key: "username", Value: validatedUsername}}
 	err = r.collection.FindOne(ctx, query).Decode(&user)
 	if err == mongo.ErrNoDocuments {
 		return nil, interfaces.ErrNotFound

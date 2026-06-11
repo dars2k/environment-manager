@@ -26,11 +26,11 @@ func TestValidateStringInput_Empty(t *testing.T) {
 	assert.Contains(t, err.Error(), "cannot be empty")
 }
 
-func TestValidateStringInput_StripsInjectionChars(t *testing.T) {
-	// Special chars like $ and . used in NoSQL injection should be stripped
-	result, err := validateStringInput("env$name")
-	assert.NoError(t, err)
-	assert.Equal(t, "envname", result)
+func TestValidateStringInput_RejectsOperatorPrefix(t *testing.T) {
+	// Special chars like $ at the start should be rejected
+	_, err := validateStringInput("$gt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "cannot start with $")
 }
 
 // validateUsername tests

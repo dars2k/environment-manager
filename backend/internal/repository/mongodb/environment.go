@@ -1,7 +1,6 @@
 package mongodb
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -16,32 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// sanitizeString removes special characters that could be used for NoSQL injection
-func sanitizeString(input string) string {
-	// Allow only alphanumeric characters and basic punctuation
-	safeChars := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ "
-	var sanitized bytes.Buffer
-	for _, char := range input {
-		if strings.ContainsRune(safeChars, char) {
-			sanitized.WriteRune(char)
-		}
-	}
-	return sanitized.String()
-}
-
-// EnvironmentRepository implements the environment repository interface for MongoDB
-type EnvironmentRepository struct {
-	collection *mongo.Collection
-}
-
-// NewEnvironmentRepository creates a new environment repository
-func NewEnvironmentRepository(db *mongo.Database) *EnvironmentRepository {
-	return &EnvironmentRepository{
-		collection: db.Collection("environments"),
-	}
-}
-
-// validateStringInput ensures the input is a valid string and sanitizes it to prevent NoSQL injection
+// validateStringInput ensures the input is a valid string and safe to use in MongoDB queries
 func validateStringInput(input interface{}) (string, error) {
 	// Ensure input is a string type
 	str, ok := input.(string)
@@ -54,10 +28,26 @@ func validateStringInput(input interface{}) (string, error) {
 		return "", fmt.Errorf("input cannot be empty")
 	}
 	
-	// Sanitize input by removing special characters that could be used for NoSQL injection
-	sanitizedStr := sanitizeString(str)
+	// Disallow common NoSQL injection characters if they appear as the first character of the string
+	// or are used in a way that could be interpreted as an operator.
+	// For most fields in this repository, we expect simple alphanumeric strings, dashes, or underscores.
+	if strings.HasPrefix(str, "$") {
+		return "", fmt.Errorf("input cannot start with $")
+	}
 	
-	return sanitizedStr, nil
+	return str, nil
+}
+
+// EnvironmentRepository implements the environment repository interface for MongoDB
+type EnvironmentRepository struct {
+	collection *mongo.Collection
+}
+
+// NewEnvironmentRepository creates a new environment repository
+func NewEnvironmentRepository(db *mongo.Database) *EnvironmentRepository {
+	return &EnvironmentRepository{
+		collection: db.Collection("environments"),
+	}
 }
 
 // Create creates a new environment

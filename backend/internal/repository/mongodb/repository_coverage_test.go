@@ -265,6 +265,73 @@ func TestEnvironmentRepository_GetByName_Error(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, env)
 	})
+
+	mt.Run("invalid name input", func(mt *mtest.T) {
+		repo := mongodb.NewEnvironmentRepository(mt.DB)
+		env, err := repo.GetByName(context.Background(), "")
+		assert.Error(t, err)
+		assert.Nil(t, env)
+	})
+}
+
+func TestEnvironmentRepository_Create_Error(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+
+	mt.Run("insert error", func(mt *mtest.T) {
+		repo := mongodb.NewEnvironmentRepository(mt.DB)
+
+		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
+			Code:    2,
+			Message: "command failed",
+		}))
+
+		env := &entities.Environment{Name: "test"}
+		err := repo.Create(context.Background(), env)
+		assert.Error(t, err)
+	})
+}
+
+func TestEnvironmentRepository_List_Error(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+
+	mt.Run("find error", func(mt *mtest.T) {
+		repo := mongodb.NewEnvironmentRepository(mt.DB)
+
+		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
+			Code:    2,
+			Message: "command failed",
+		}))
+
+		_, err := repo.List(context.Background(), interfaces.ListFilter{})
+		assert.Error(t, err)
+	})
+
+	mt.Run("decode error", func(mt *mtest.T) {
+		repo := mongodb.NewEnvironmentRepository(mt.DB)
+
+		mt.AddMockResponses(mtest.CreateCursorResponse(1, "test.environments", mtest.FirstBatch,
+			bson.D{{Key: "_id", Value: "not-an-objectid"}},
+		))
+
+		_, err := repo.List(context.Background(), interfaces.ListFilter{})
+		assert.Error(t, err)
+	})
+}
+
+func TestEnvironmentRepository_Delete_Error(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+
+	mt.Run("delete error", func(mt *mtest.T) {
+		repo := mongodb.NewEnvironmentRepository(mt.DB)
+
+		mt.AddMockResponses(mtest.CreateCommandErrorResponse(mtest.CommandError{
+			Code:    2,
+			Message: "command failed",
+		}))
+
+		err := repo.Delete(context.Background(), primitive.NewObjectID().Hex())
+		assert.Error(t, err)
+	})
 }
 
 func TestEnvironmentRepository_Update_DuplicateName(t *testing.T) {
