@@ -30,7 +30,6 @@ func validateStringInput(input interface{}) (string, error) {
 	
 	// Disallow common NoSQL injection characters if they appear as the first character of the string
 	// or are used in a way that could be interpreted as an operator.
-	// For most fields in this repository, we expect simple alphanumeric strings, dashes, or underscores.
 	if strings.HasPrefix(str, "$") {
 		return "", fmt.Errorf("input cannot start with $")
 	}

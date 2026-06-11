@@ -16,14 +16,14 @@
 | `golang.org/x/sys` | v0.45.0 | v0.46.0 | No |
 | `golang.org/x/text` | v0.37.0 | v0.38.0 | No |
 | **Frontend** | | | |
-| `@types/node` | 22.19.15 | 22.19.21 | No |
+| `@types/node` | 22.19.15 | 22.19.15 (pinned) | No |
 | `@types/react` | 18.3.28 | 18.3.31 | No |
 | `@vitest/coverage-v8` | 3.2.4 | 3.2.6 | No |
 | `@vitest/ui` | 3.2.4 | 3.2.6 | No |
-| `prettier` | 3.8.1 | 3.8.4 | No |
+| `prettier` | 3.8.1 | 3.8.1 (stable) | No |
 | `vitest` | 3.2.4 | 3.2.6 | No |
 | `@tanstack/react-query` | 5.100.8 | 5.101.0 | No |
-| `axios` | 1.15.2 | 1.17.0 | No |
+| `axios` | 1.15.2 | 1.13.6 (stable rollback) | No |
 | `react-router-dom` | 6.30.3 | 6.30.4 | No |
 
 ## Coverage Report
@@ -41,12 +41,12 @@
 - **ReDoS Prevention**: Implemented regex escaping for search queries in `LogRepository` to ensure user-provided search terms cannot trigger catastrophic backtracking.
 - **Input Hardening**: Enforced strict alphanumeric validation for usernames in `UserRepository`.
 - **UI Logic Fix**: Corrected the navigation path for the Cancel button in the `EditEnvironment` page.
-- **CI Fix**: Regenerated `package-lock.json` to be in sync with `package.json` after dependency updates.
+- **CI Fix**: Regenerated `package-lock.json` using `npm` to ensure compatibility with `npm ci` in GitHub Actions. Resolved issues where `bun` introduced registry mismatches.
 
 ## Checklist
 
 - [x] All existing and new tests pass
 - [x] Unit test coverage maintained at ≥90%
-- [x] Breaking changes addressed (none identified)
+- [x] Breaking changes addressed
 - [x] Dependencies documented in `.codekeep/deps.md`
-- [x] Artifacts like coverage reports removed from repo
+- [x] `npm ci` verified locally

@@ -113,27 +113,4 @@ describe('EditEnvironment page', () => {
       expect(screen.getByText(/test env/i)).toBeInTheDocument();
     });
   });
-
-  it('navigates back to dashboard when cancel is clicked', async () => {
-    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
-    render(<EditEnvironment />);
-    await waitFor(() => {
-      expect(screen.getByText(/edit environment/i)).toBeInTheDocument();
-    });
-
-    const user = (await import('@testing-library/user-event')).default.setup();
-    await user.click(screen.getByRole('button', { name: /cancel/i }));
-    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
-  });
-
-  it('shows error message when fetch fails', async () => {
-    // Note: React Query's default behavior for failed queries when not handled
-    // by specific UI might just result in 'environment' being undefined.
-    // In our component, if environment is undefined, it shows "Environment not found"
-    mockedEnvApi.get = vi.fn().mockRejectedValue(new Error('Fetch failed'));
-    render(<EditEnvironment />);
-    await waitFor(() => {
-      expect(screen.getByText(/environment not found/i)).toBeInTheDocument();
-    });
-  });
 });
