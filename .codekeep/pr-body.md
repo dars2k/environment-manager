@@ -37,10 +37,11 @@
 
 ## QA Fixes
 
-- **NoSQL Injection Prevention**: Added validation in `EnvironmentRepository` to reject search strings starting with the `$` operator.
+- **NoSQL Injection Prevention**: Added validation in `EnvironmentRepository` to reject search strings starting with the `$` operator. Replaced silent sanitization with explicit validation based on code review.
 - **ReDoS Prevention**: Implemented regex escaping for search queries in `LogRepository` to ensure user-provided search terms cannot trigger catastrophic backtracking.
 - **Input Hardening**: Enforced strict alphanumeric validation for usernames in `UserRepository`.
 - **UI Logic Fix**: Corrected the navigation path for the Cancel button in the `EditEnvironment` page.
+- **CI Fix**: Regenerated `package-lock.json` to be in sync with `package.json` after dependency updates.
 
 ## Checklist
 
@@ -48,3 +49,4 @@
 - [x] Unit test coverage maintained at ≥90%
 - [x] Breaking changes addressed (none identified)
 - [x] Dependencies documented in `.codekeep/deps.md`
+- [x] Artifacts like coverage reports removed from repo
