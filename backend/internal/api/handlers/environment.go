@@ -93,7 +93,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 	filter := parseListFilter(r)
 
 	// Get environments
-	envs, err := h.service.ListEnvironments(ctx, filter)
+	envs, total, err := h.service.ListEnvironments(ctx, filter)
 	if err != nil {
 		h.respondError(w, err)
 		return
@@ -108,7 +108,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 		Pagination: dto.PaginationResponse{
 			Page:  filter.Pagination.Page,
 			Limit: filter.Pagination.GetLimit(),
-			Total: len(envs), // TODO: Get total count from service
+			Total: int(total),
 		},
 	}
 

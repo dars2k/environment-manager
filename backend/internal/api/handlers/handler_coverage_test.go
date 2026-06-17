@@ -209,6 +209,7 @@ func TestEnvironmentHandler_List_WithQueryParams(t *testing.T) {
 
 	envs := []*entities.Environment{sampleEnvForHandler(primitive.NewObjectID())}
 	s.envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(envs, nil)
+	s.envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil)
 
 	req := httptest.NewRequest("GET", "/api/environments?page=2&limit=20&status=healthy", nil)
 	w := httptest.NewRecorder()

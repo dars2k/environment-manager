@@ -145,6 +145,7 @@ func TestStartHealthCheckScheduler_EmptyList(t *testing.T) {
 
 	// Return empty list — scheduler should handle it without error
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(0), nil).Maybe()
 
 	svc := newTestService(envRepo, logRepo, auditRepo)
 
@@ -182,6 +183,7 @@ func TestStartHealthCheckScheduler_ListError(t *testing.T) {
 
 	// Return error — scheduler should log and continue
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(nil, errListFailed)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(0), errListFailed).Maybe()
 
 	svc := newTestService(envRepo, logRepo, auditRepo)
 
@@ -218,6 +220,7 @@ func TestStartHealthCheckScheduler_WithEnvironments(t *testing.T) {
 
 	// Return one environment — scheduler will check health for it
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{env}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil).Maybe()
 	envRepo.On("GetByID", mock.Anything, id.Hex()).Return(env, nil).Maybe()
 	envRepo.On("UpdateStatus", mock.Anything, id.Hex(), mock.AnythingOfType("entities.Status")).Return(nil).Maybe()
 

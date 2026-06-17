@@ -173,7 +173,7 @@ func startHealthCheckScheduler(service *environment.Service, defaultInterval tim
 	for range ticker.C {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 
-		envs, err := service.ListEnvironments(ctx, interfaces.ListFilter{})
+		envs, _, err := service.ListEnvironments(ctx, interfaces.ListFilter{})
 		if err != nil {
 			logger.WithError(err).Error("Failed to list environments for health check")
 			cancel()

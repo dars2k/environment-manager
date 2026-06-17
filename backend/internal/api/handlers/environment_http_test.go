@@ -166,6 +166,7 @@ func TestEnvironmentHandler_List_Success(t *testing.T) {
 	envs := []*entities.Environment{sampleEnvForHandler(id)}
 
 	s.envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(envs, nil)
+	s.envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil)
 
 	req := httptest.NewRequest("GET", "/api/environments", nil)
 	w := httptest.NewRecorder()

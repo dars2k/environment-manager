@@ -26,6 +26,7 @@ func TestStartHealthCheckScheduler_ShortInterval(t *testing.T) {
 	auditRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Maybe()
 	logRepo.On("Create", mock.Anything, mock.Anything).Return(nil).Maybe()
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(0), nil).Maybe()
 
 	svc := newTestService(envRepo, logRepo, auditRepo)
 
@@ -62,6 +63,7 @@ func TestStartHealthCheckScheduler_HealthCheckEnabled_WithInterval(t *testing.T)
 	}
 
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{env}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil).Maybe()
 	envRepo.On("GetByID", mock.Anything, id.Hex()).Return(env, nil).Maybe()
 	envRepo.On("UpdateStatus", mock.Anything, id.Hex(), mock.AnythingOfType("entities.Status")).Return(nil).Maybe()
 	envRepo.On("Update", mock.Anything, id.Hex(), mock.AnythingOfType("*entities.Environment")).Return(nil).Maybe()
@@ -100,6 +102,7 @@ func TestStartHealthCheckScheduler_NotDueYet(t *testing.T) {
 	}
 
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{env}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil).Maybe()
 	envRepo.On("GetByID", mock.Anything, id.Hex()).Return(env, nil).Maybe()
 	envRepo.On("UpdateStatus", mock.Anything, id.Hex(), mock.Anything).Return(nil).Maybe()
 	envRepo.On("Update", mock.Anything, id.Hex(), mock.Anything).Return(nil).Maybe()
@@ -135,9 +138,8 @@ func TestStartHealthCheckScheduler_DisabledHealthCheck(t *testing.T) {
 		},
 	}
 
-	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(
-		[]*entities.Environment{env}, nil,
-	)
+	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return([]*entities.Environment{env}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil).Maybe()
 
 	svc := newTestService(envRepo, logRepo, auditRepo)
 
@@ -176,6 +178,7 @@ func TestStartHealthCheckScheduler_CheckHealthFails(t *testing.T) {
 	// List succeeds and returns the environment so the scheduler tries to check it.
 	envRepo.On("List", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).
 		Return([]*entities.Environment{env}, nil)
+	envRepo.On("Count", mock.Anything, mock.AnythingOfType("interfaces.ListFilter")).Return(int64(1), nil).Maybe()
 
 	// GetByID fails → CheckHealth returns an error → scheduler logs Error("Health check failed").
 	envRepo.On("GetByID", mock.Anything, id.Hex()).
@@ -211,6 +214,9 @@ func TestStartHealthCheckScheduler_ListFilter(t *testing.T) {
 	envRepo.On("List", mock.Anything, mock.MatchedBy(func(f interfaces.ListFilter) bool {
 		return true // accept any filter
 	})).Return([]*entities.Environment{}, nil)
+	envRepo.On("Count", mock.Anything, mock.MatchedBy(func(f interfaces.ListFilter) bool {
+		return true // accept any filter
+	})).Return(int64(0), nil).Maybe()
 
 	svc := newTestService(envRepo, logRepo, auditRepo)
 

@@ -95,11 +95,13 @@ func TestService_ListEnvironments_Success(t *testing.T) {
 
 	filter := interfaces.ListFilter{Pagination: &interfaces.Pagination{Page: 1, Limit: 10}}
 	repo.On("List", mock.Anything, filter).Return(envs, nil)
+	repo.On("Count", mock.Anything, filter).Return(int64(2), nil)
 
-	result, err := svc.ListEnvironments(context.Background(), filter)
+	result, total, err := svc.ListEnvironments(context.Background(), filter)
 
 	assert.NoError(t, err)
 	assert.Len(t, result, 2)
+	assert.Equal(t, int64(2), total)
 	repo.AssertExpectations(t)
 }
 
@@ -111,10 +113,11 @@ func TestService_ListEnvironments_Error(t *testing.T) {
 	filter := interfaces.ListFilter{}
 	repo.On("List", mock.Anything, filter).Return(nil, fmt.Errorf("db error"))
 
-	result, err := svc.ListEnvironments(context.Background(), filter)
+	result, total, err := svc.ListEnvironments(context.Background(), filter)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)
+	assert.Equal(t, int64(0), total)
 }
 
 // ---- CreateEnvironment ----

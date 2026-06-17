@@ -135,9 +135,19 @@ func (s *Service) GetEnvironment(ctx context.Context, id string) (*entities.Envi
 	return s.repo.GetByID(ctx, id)
 }
 
-// ListEnvironments lists all environments
-func (s *Service) ListEnvironments(ctx context.Context, filter interfaces.ListFilter) ([]*entities.Environment, error) {
-	return s.repo.List(ctx, filter)
+// ListEnvironments lists all environments and the total count
+func (s *Service) ListEnvironments(ctx context.Context, filter interfaces.ListFilter) ([]*entities.Environment, int64, error) {
+	envs, err := s.repo.List(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := s.repo.Count(ctx, filter)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return envs, total, nil
 }
 
 // UpdateEnvironment updates an environment
