@@ -609,3 +609,41 @@ describe('EnvironmentForm', () => {
     });
   });
 });
+
+  it('updates upgrade command type and SSH commands', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable SSH
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+
+    // Enable upgrade
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/upgrade command type/i)).toBeInTheDocument();
+    });
+
+    // Change to SSH if not already (it is default, but let's be explicit if possible)
+    // Typing in the SSH commands field
+    const sshCommandsField = screen.getByLabelText(/ssh upgrade commands/i);
+    await user.type(sshCommandsField, 'echo upgrade');
+    expect(sshCommandsField).toHaveValue('echo upgrade');
+
+    // Change to HTTP
+    await user.click(screen.getByLabelText(/upgrade command type/i));
+    const httpOption = await screen.findByText('HTTP');
+    await user.click(httpOption);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/upgrade endpoint/i)).toBeInTheDocument();
+    });
+  });

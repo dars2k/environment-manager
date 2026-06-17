@@ -734,3 +734,15 @@ func TestManager_TestConnection_InvalidTarget(t *testing.T) {
 	err := manager.TestConnection(ctx, target)
 	assert.Error(t, err)
 }
+
+func TestManager_Execute_DangerousCommand(t *testing.T) {
+	config := ssh.Config{}
+	manager := ssh.NewManager(config)
+	ctx := context.Background()
+	target := ssh.Target{Host: "localhost", Port: 22, Username: "test"}
+
+	result, err := manager.Execute(ctx, target, "ls; rm -rf /")
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "invalid command")
+}

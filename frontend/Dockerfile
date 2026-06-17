@@ -5,21 +5,18 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY package.json ./
+COPY package.json bun.lock ./
 
-# Install dependencies with clean state and proper esbuild
-RUN apk add --no-cache python3 make g++ && \
-    rm -rf node_modules package-lock.json ~/.npm && \
-    npm cache clean --force && \
-    npm install && \
-    npm uninstall esbuild && \
-    npm install esbuild@0.21.5
+# Install dependencies using Bun
+RUN apk add --no-cache curl bash && \
+    curl -fsSL https://bun.sh/install | bash && \
+    /root/.bun/bin/bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN /root/.bun/bin/bun run build
 
 # Certificate generation stage (optional)
 FROM alpine:3.21 AS cert-generator
