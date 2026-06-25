@@ -113,4 +113,22 @@ describe('EditEnvironment page', () => {
       expect(screen.getByText(/test env/i)).toBeInTheDocument();
     });
   });
+
+  it('submits updated data when form is submitted', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockResolvedValue({ ...mockEnvironment, name: 'Updated' });
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+
+    render(<EditEnvironment />);
+    await waitFor(() => expect(screen.getByText(/edit environment/i)).toBeInTheDocument());
+
+    await u.type(screen.getByLabelText(/^environment name\s*\*/i), ' Updated');
+    await u.click(screen.getByRole('button', { name: /update environment/i }));
+
+    await waitFor(() => {
+      expect(mockedEnvApi.update).toHaveBeenCalled();
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    });
+  }, 15000);
 });

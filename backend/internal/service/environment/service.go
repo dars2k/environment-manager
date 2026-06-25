@@ -140,6 +140,11 @@ func (s *Service) ListEnvironments(ctx context.Context, filter interfaces.ListFi
 	return s.repo.List(ctx, filter)
 }
 
+// CountEnvironments counts environments matching the filter
+func (s *Service) CountEnvironments(ctx context.Context, filter interfaces.ListFilter) (int64, error) {
+	return s.repo.Count(ctx, filter)
+}
+
 // UpdateEnvironment updates an environment
 func (s *Service) UpdateEnvironment(ctx context.Context, id string, req CreateEnvironmentRequest) (*entities.Environment, error) {
 	// Get existing environment

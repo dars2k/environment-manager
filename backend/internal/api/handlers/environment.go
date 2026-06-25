@@ -99,6 +99,14 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Get total count
+	total, err := h.service.CountEnvironments(ctx, filter)
+	if err != nil {
+		h.logger.WithError(err).Error("Failed to count environments")
+		// Continue with len(envs) as fallback
+		total = int64(len(envs))
+	}
+
 	// Redact sensitive fields before response
 	redactedEnvs := redactSensitiveFieldsList(envs)
 
@@ -108,7 +116,7 @@ func (h *EnvironmentHandler) List(w http.ResponseWriter, r *http.Request) {
 		Pagination: dto.PaginationResponse{
 			Page:  filter.Pagination.Page,
 			Limit: filter.Pagination.GetLimit(),
-			Total: len(envs), // TODO: Get total count from service
+			Total: int(total),
 		},
 	}
 
