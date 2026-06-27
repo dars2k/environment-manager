@@ -236,3 +236,43 @@ func TestStartHealthCheckScheduler_WithEnvironments(t *testing.T) {
 
 // errListFailed is a sentinel error for test purposes.
 var errListFailed = fmt.Errorf("list failed")
+
+type mockUserRepoMain struct{ mock.Mock }
+
+func (m *mockUserRepoMain) Create(ctx context.Context, u *entities.User) error {
+	return m.Called(ctx, u).Error(0)
+}
+func (m *mockUserRepoMain) GetByID(ctx context.Context, id string) (*entities.User, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.User), args.Error(1)
+}
+func (m *mockUserRepoMain) GetByUsername(ctx context.Context, username string) (*entities.User, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.User), args.Error(1)
+}
+func (m *mockUserRepoMain) List(ctx context.Context, filter interfaces.ListFilter) ([]*entities.User, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*entities.User), args.Error(1)
+}
+func (m *mockUserRepoMain) Update(ctx context.Context, id string, u *entities.User) error {
+	return m.Called(ctx, id, u).Error(0)
+}
+func (m *mockUserRepoMain) UpdateLastLogin(ctx context.Context, id primitive.ObjectID) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockUserRepoMain) Delete(ctx context.Context, id string) error {
+	return m.Called(ctx, id).Error(0)
+}
+func (m *mockUserRepoMain) Count(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}

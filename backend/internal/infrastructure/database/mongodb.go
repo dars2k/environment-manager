@@ -11,6 +11,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+// mongoConnect is the function used to connect to MongoDB.
+// It can be overridden in tests to inject a mock client.
+var mongoConnect = mongo.Connect
+
 // MongoDB represents a MongoDB connection
 type MongoDB struct {
 	client   *mongo.Client
@@ -30,7 +34,7 @@ func NewMongoDB(uri, databaseName string, maxConnections int, timeout time.Durat
 		SetServerSelectionTimeout(timeout)
 
 	// Connect to MongoDB
-	client, err := mongo.Connect(ctx, clientOptions)
+	client, err := mongoConnect(ctx, clientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MongoDB: %w", err)
 	}
