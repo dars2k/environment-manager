@@ -78,7 +78,7 @@ func validateCommand(command string) error {
 	}
 
 	// Reject common shell metacharacters used for command chaining / redirection
-	dangerousChars := []string{";", "&&", "||", "|", "`", "$", "<", ">", "&", "(", ")"}
+	dangerousChars := []string{";", "&&", "||", "|", "`", "$", "<", ">", "&"}
 	for _, char := range dangerousChars {
 		if strings.Contains(command, char) {
 			return fmt.Errorf("command contains potentially dangerous character: %s", char)
