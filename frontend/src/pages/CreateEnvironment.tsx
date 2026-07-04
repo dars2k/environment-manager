@@ -41,7 +41,11 @@ export const CreateEnvironment: React.FC = () => {
 
   const handleSubmit = async (data: CreateEnvironmentRequest, password?: string, privateKey?: string) => {
     setError(null);
-    await createMutation.mutateAsync({ data, password, privateKey });
+    try {
+      await createMutation.mutateAsync({ data, password, privateKey });
+    } catch {
+      // Error state is already set by the mutation's onError handler.
+    }
   };
 
   return (

@@ -113,4 +113,53 @@ describe('EditEnvironment page', () => {
       expect(screen.getByText(/test env/i)).toBeInTheDocument();
     });
   });
+
+  it('calls environmentApi.update and navigates to dashboard on successful submit', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockResolvedValue({ ...mockEnvironment });
+    mockNavigate.mockClear();
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/test env/i)).toBeInTheDocument();
+    });
+    await u.click(screen.getByRole('button', { name: /update environment/i }));
+    await waitFor(() => {
+      expect(mockedEnvApi.update).toHaveBeenCalledWith('env-1', expect.objectContaining({ name: 'Test Env' }));
+    });
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+    });
+  }, 15000);
+
+  it('shows an error alert when update fails', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockRejectedValue({ response: { data: { message: 'Update failed: name conflict' } } });
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/test env/i)).toBeInTheDocument();
+    });
+    await u.click(screen.getByRole('button', { name: /update environment/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/update failed: name conflict/i)).toBeInTheDocument();
+    });
+  }, 15000);
+
+  it('falls back to a generic error message when the rejection has no response message', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockRejectedValue(new Error('network down'));
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/test env/i)).toBeInTheDocument();
+    });
+    await u.click(screen.getByRole('button', { name: /update environment/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/failed to update environment/i)).toBeInTheDocument();
+    });
+  }, 15000);
 });

@@ -608,4 +608,370 @@ describe('EnvironmentForm', () => {
       }
     });
   });
+
+  it('parses valid JSON body via handleHttpRestartChange and submits it as an object', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Restart is HTTP mode by default (SSH disabled)
+    const bodyField = await screen.findByLabelText(/request body/i);
+    fe.change(bodyField, { target: { value: '{"action":"restart"}' } });
+    expect((bodyField as HTMLInputElement).value).toBe('{"action":"restart"}');
+
+    await screen.findByLabelText(/environment name/i);
+    fe.change(screen.getByLabelText(/environment name/i), { target: { value: 'Body Env' } });
+
+    fe.click(screen.getByRole('button', { name: /create environment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          commands: expect.objectContaining({
+            restart: expect.objectContaining({
+              body: { action: 'restart' },
+            }),
+          }),
+        }),
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+  });
+
+  it('falls back to raw string body when JSON.parse fails in handleHttpRestartChange', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const bodyField = await screen.findByLabelText(/request body/i);
+    fe.change(bodyField, { target: { value: 'not valid json {' } });
+    expect((bodyField as HTMLInputElement).value).toBe('not valid json {');
+
+    fe.change(screen.getByLabelText(/environment name/i), { target: { value: 'Body Env 2' } });
+    fe.click(screen.getByRole('button', { name: /create environment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          commands: expect.objectContaining({
+            restart: expect.objectContaining({
+              body: 'not valid json {',
+            }),
+          }),
+        }),
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+  });
+
+  it('parses valid JSON body via handleHttpUpgradeChange and submits it as an object', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable upgrade (SSH disabled -> HTTP mode)
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    fe.click(switchInputs[2] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByText(/version list endpoint configuration/i)).toBeInTheDocument();
+    });
+
+    // Two "Request Body" fields will exist now (version list + upgrade command) - use the last one
+    const bodyFields = screen.getAllByLabelText(/request body/i);
+    const upgradeBodyField = bodyFields[bodyFields.length - 1];
+    fe.change(upgradeBodyField, { target: { value: '{"version":"{VERSION}"}' } });
+
+    fe.change(screen.getByLabelText(/environment name/i), { target: { value: 'Upgrade Env' } });
+    fe.click(screen.getByRole('button', { name: /create environment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          upgradeConfig: expect.objectContaining({
+            upgradeCommand: expect.objectContaining({
+              body: { version: '{VERSION}' },
+            }),
+          }),
+        }),
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+  });
+
+  it('falls back to raw string body when JSON.parse fails in handleHttpUpgradeChange', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    fe.click(switchInputs[2] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByText(/version list endpoint configuration/i)).toBeInTheDocument();
+    });
+
+    const bodyFields = screen.getAllByLabelText(/request body/i);
+    const upgradeBodyField = bodyFields[bodyFields.length - 1];
+    fe.change(upgradeBodyField, { target: { value: 'not json {' } });
+
+    fe.change(screen.getByLabelText(/environment name/i), { target: { value: 'Upgrade Env 2' } });
+    fe.click(screen.getByRole('button', { name: /create environment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          upgradeConfig: expect.objectContaining({
+            upgradeCommand: expect.objectContaining({
+              body: 'not json {',
+            }),
+          }),
+        }),
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+  });
+
+  it('submits with SSH fields cleared and command type forced to http when SSH control is disabled', async () => {
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    fe.change(screen.getByLabelText(/environment name/i), { target: { value: 'No SSH Env' } });
+    fe.click(screen.getByRole('button', { name: /create environment/i }));
+
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: { host: '', port: 22 },
+          credentials: { type: 'password', username: '' },
+          commands: expect.objectContaining({
+            type: 'http',
+            restart: expect.objectContaining({ command: undefined }),
+          }),
+        }),
+        expect.any(String),
+        expect.any(String)
+      );
+    });
+  });
+
+  it('updates SSH port field', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const sshCheckbox = screen.getByLabelText(/enable ssh control/i);
+    await user.click(sshCheckbox);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh port/i)).toBeInTheDocument();
+    });
+
+    const portField = screen.getByLabelText(/ssh port/i);
+    await user.clear(portField);
+    await user.type(portField, '2222');
+
+    expect((portField as HTMLInputElement).value).toBe('2222');
+  }, 15000);
+
+  it('re-enables SSH command type and shows SSH restart command field', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable SSH control - command type selector becomes enabled
+    const sshCheckbox = screen.getByLabelText(/enable ssh control/i);
+    await user.click(sshCheckbox);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/^command type$/i)).toBeInTheDocument();
+    });
+
+    // Command type defaults to http (from the disable-SSH effect the first time
+    // sshControlEnabled toggled true it stays whatever formData.commands.type is)
+    const commandTypeField = screen.getByLabelText(/^command type$/i);
+    await user.click(commandTypeField);
+
+    const sshOption = await screen.findByRole('option', { name: /^ssh$/i });
+    await user.click(sshOption);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh restart command/i)).toBeInTheDocument();
+    });
+
+    await user.type(screen.getByLabelText(/ssh restart command/i), 'sudo systemctl restart app');
+    expect((screen.getByLabelText(/ssh restart command/i) as HTMLInputElement).value).toBe(
+      'sudo systemctl restart app'
+    );
+  }, 15000);
+
+  it('changes health check validation type to jsonRegex and updates expected value', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[0] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/validation type/i)).toBeInTheDocument();
+    });
+
+    const validationTypeField = screen.getByLabelText(/validation type/i);
+    await user.click(validationTypeField);
+
+    const jsonRegexOption = await screen.findByRole('option', { name: /json regex/i });
+    await user.click(jsonRegexOption);
+
+    await waitFor(() => {
+      expect(screen.getByText(/regular expression to match in response/i)).toBeInTheDocument();
+    });
+
+    const expectedValueField = screen.getByLabelText(/expected value/i);
+    await user.type(expectedValueField, 'ok');
+    expect((expectedValueField as HTMLInputElement).value).toBe('ok');
+  }, 15000);
+
+  it('updates health check endpoint, interval and timeout fields', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[0] as HTMLElement);
+
+    const endpointField = await screen.findByLabelText(/health check endpoint/i);
+    await user.clear(endpointField);
+    await user.type(endpointField, '/status');
+    expect((endpointField as HTMLInputElement).value).toBe('/status');
+
+    const intervalField = screen.getByLabelText(/check interval/i);
+    await user.clear(intervalField);
+    await user.type(intervalField, '60');
+    expect((intervalField as HTMLInputElement).value).toBe('60');
+
+    const timeoutField = screen.getByLabelText(/timeout \(seconds\)/i);
+    await user.clear(timeoutField);
+    await user.type(timeoutField, '15');
+    expect((timeoutField as HTMLInputElement).value).toBe('15');
+  }, 15000);
+
+  it('changes health check HTTP method', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[0] as HTMLElement);
+
+    const methodField = await screen.findByLabelText(/http method/i);
+    await user.click(methodField);
+
+    const postOption = await screen.findByRole('option', { name: /^post$/i });
+    await user.click(postOption);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/http method/i)).toHaveTextContent('POST');
+    });
+  }, 15000);
+
+  it('updates description field', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const descriptionField = screen.getByLabelText(/description/i);
+    await user.type(descriptionField, 'A test description');
+    expect((descriptionField as HTMLInputElement).value).toBe('A test description');
+  }, 15000);
+
+  it('updates JSONPath response field when upgrade is enabled', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    const jsonPathField = await screen.findByLabelText(/jsonpath response/i);
+    await user.type(jsonPathField, '$.versions[*]');
+    expect((jsonPathField as HTMLInputElement).value).toBe('$.versions[*]');
+  }, 15000);
 });
