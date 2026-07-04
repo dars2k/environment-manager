@@ -793,6 +793,7 @@ describe('EnvironmentForm', () => {
   it('updates SSH port field', async () => {
     const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
 
     render(
       <EnvironmentForm
@@ -809,8 +810,7 @@ describe('EnvironmentForm', () => {
     });
 
     const portField = screen.getByLabelText(/ssh port/i);
-    await user.clear(portField);
-    await user.type(portField, '2222');
+    fe.change(portField, { target: { value: '2222' } });
 
     expect((portField as HTMLInputElement).value).toBe('2222');
   }, 15000);
@@ -888,6 +888,7 @@ describe('EnvironmentForm', () => {
   it('updates health check endpoint, interval and timeout fields', async () => {
     const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
 
     render(
       <EnvironmentForm
@@ -900,18 +901,15 @@ describe('EnvironmentForm', () => {
     await user.click(switchInputs[0] as HTMLElement);
 
     const endpointField = await screen.findByLabelText(/health check endpoint/i);
-    await user.clear(endpointField);
-    await user.type(endpointField, '/status');
+    fe.change(endpointField, { target: { value: '/status' } });
     expect((endpointField as HTMLInputElement).value).toBe('/status');
 
     const intervalField = screen.getByLabelText(/check interval/i);
-    await user.clear(intervalField);
-    await user.type(intervalField, '60');
+    fe.change(intervalField, { target: { value: '60' } });
     expect((intervalField as HTMLInputElement).value).toBe('60');
 
     const timeoutField = screen.getByLabelText(/timeout \(seconds\)/i);
-    await user.clear(timeoutField);
-    await user.type(timeoutField, '15');
+    fe.change(timeoutField, { target: { value: '15' } });
     expect((timeoutField as HTMLInputElement).value).toBe('15');
   }, 15000);
 
@@ -956,9 +954,77 @@ describe('EnvironmentForm', () => {
     expect((descriptionField as HTMLInputElement).value).toBe('A test description');
   }, 15000);
 
+  it('shows and edits SSH upgrade commands textarea when SSH control and upgrade are both enabled', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable SSH control
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh host/i)).toBeInTheDocument();
+    });
+
+    // Enable upgrade config (switch index 2 with SSH enabled: health(0), restart(1), upgrade(2))
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    // upgradeConfig.type defaults to 'ssh', so with SSH control enabled the
+    // SSH Upgrade Commands textarea should render (not the HTTP config).
+    const sshUpgradeField = await screen.findByLabelText(/ssh upgrade commands/i);
+    fe.change(sshUpgradeField, { target: { value: 'sudo app-upgrade --version={VERSION}' } });
+    expect((sshUpgradeField as HTMLInputElement).value).toBe('sudo app-upgrade --version={VERSION}');
+  }, 15000);
+
+  it('switches upgrade command type back to ssh via the selector while SSH control is enabled', async () => {
+    const user = userEvent.setup({ delay: null });
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh host/i)).toBeInTheDocument();
+    });
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    const upgradeTypeField = await screen.findByLabelText(/upgrade command type/i);
+    await user.click(upgradeTypeField);
+    const httpOption = await screen.findByRole('option', { name: /^http$/i });
+    await user.click(httpOption);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/upgrade endpoint/i)).toBeInTheDocument();
+    });
+
+    // Switch back to SSH
+    await user.click(screen.getByLabelText(/upgrade command type/i));
+    const sshOption = await screen.findByRole('option', { name: /^ssh$/i });
+    await user.click(sshOption);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh upgrade commands/i)).toBeInTheDocument();
+    });
+  }, 15000);
+
   it('updates JSONPath response field when upgrade is enabled', async () => {
     const user = userEvent.setup({ delay: null });
     const onSubmit = vi.fn();
+    const { fireEvent: fe } = await import('@testing-library/react');
 
     render(
       <EnvironmentForm
@@ -971,7 +1037,7 @@ describe('EnvironmentForm', () => {
     await user.click(switchInputs[2] as HTMLElement);
 
     const jsonPathField = await screen.findByLabelText(/jsonpath response/i);
-    await user.type(jsonPathField, '$.versions[*]');
+    fe.change(jsonPathField, { target: { value: '$.versions[*]' } });
     expect((jsonPathField as HTMLInputElement).value).toBe('$.versions[*]');
   }, 15000);
 });
