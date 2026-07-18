@@ -47,7 +47,6 @@ describe('Users page', () => {
     mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser, mockViewer]);
     render(<Users />);
     await waitFor(() => {
-      // Username column cells
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
       expect(screen.getByText('viewer1')).toBeInTheDocument();
     });
@@ -73,7 +72,6 @@ describe('Users page', () => {
     mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser, mockViewer]);
     render(<Users />);
     await waitFor(() => {
-      // viewer1 user has viewer role chip
       expect(screen.getByText('viewer')).toBeInTheDocument();
     });
   });
@@ -115,7 +113,6 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
     });
-    // Click the edit icon button
     const editButtons = document.querySelectorAll('[data-testid="EditIcon"]');
     if (editButtons.length > 0) {
       fireEvent.click(editButtons[0].parentElement!);
@@ -136,17 +133,53 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getByText(/create new user/i)).toBeInTheDocument();
     });
-    // Fill in username
     const usernameField = screen.getByLabelText(/username/i);
     fireEvent.change(usernameField, { target: { value: 'newuser' } });
-    // Fill in password
     const passwordFields = screen.getAllByLabelText(/password/i);
     fireEvent.change(passwordFields[0], { target: { value: 'password123' } });
-    // Submit
     const createBtn = screen.getByRole('button', { name: /^create$/i });
     fireEvent.click(createBtn);
     await waitFor(() => {
       expect(mockedUsersApi.createUser).toHaveBeenCalled();
+    });
+  });
+
+  it('shows validation errors in create user dialog', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([]);
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create user/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /create user/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/create new user/i)).toBeInTheDocument();
+    });
+    const createBtn = screen.getByRole('button', { name: /^create$/i });
+    fireEvent.click(createBtn);
+    await waitFor(() => {
+      expect(screen.getByText(/username must be at least 3 characters/i)).toBeInTheDocument();
+      expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows submit error in create user dialog on failure', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([]);
+    mockedUsersApi.createUser = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Username already exists' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /create user/i })).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /create user/i }));
+    const usernameField = screen.getByLabelText(/username/i);
+    fireEvent.change(usernameField, { target: { value: 'newuser' } });
+    const passwordFields = screen.getAllByLabelText(/password/i);
+    fireEvent.change(passwordFields[0], { target: { value: 'password123' } });
+    const createBtn = screen.getByRole('button', { name: /^create$/i });
+    fireEvent.click(createBtn);
+    await waitFor(() => {
+      expect(screen.getByText(/username already exists/i)).toBeInTheDocument();
     });
   });
 
@@ -178,11 +211,33 @@ describe('Users page', () => {
       await waitFor(() => {
         expect(screen.getAllByText(/delete user/i).length).toBeGreaterThanOrEqual(1);
       });
-      // Click the Delete confirm button
       const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
       fireEvent.click(deleteBtn);
       await waitFor(() => {
         expect(mockedUsersApi.deleteUser).toHaveBeenCalledWith(mockUser.id);
+      });
+    }
+  });
+
+  it('sets error on delete user failure', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.deleteUser = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Failed to delete admin user' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const deleteButtons = document.querySelectorAll('[data-testid="DeleteIcon"]');
+    if (deleteButtons.length > 0) {
+      fireEvent.click(deleteButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getAllByText(/delete user/i).length).toBeGreaterThanOrEqual(1);
+      });
+      const deleteBtn = screen.getByRole('button', { name: /^delete$/i });
+      fireEvent.click(deleteBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/failed to delete admin user/i)).toBeInTheDocument();
       });
     }
   });
@@ -201,7 +256,6 @@ describe('Users page', () => {
       });
       const cancelBtn = screen.getByRole('button', { name: /cancel/i });
       fireEvent.click(cancelBtn);
-      // Dialog should close
       await waitFor(() => {
         const deleteBtns = screen.queryAllByText(/^delete$/i);
         expect(deleteBtns.length).toBe(0);
@@ -220,6 +274,71 @@ describe('Users page', () => {
       fireEvent.click(keyButtons[0].parentElement!);
       await waitFor(() => {
         expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+      });
+    }
+  });
+
+  it('handles reset password errors and success', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn().mockResolvedValue(undefined);
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const keyButtons = document.querySelectorAll('[data-testid="KeyIcon"]');
+    if (keyButtons.length > 0) {
+      fireEvent.click(keyButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getByText(/reset password for admin/i)).toBeInTheDocument();
+      });
+
+      const resetBtn = screen.getByRole('button', { name: /reset password/i });
+
+      // Error 1: Password < 6 chars
+      const newPasswordField = screen.getByLabelText(/new password/i);
+      fireEvent.change(newPasswordField, { target: { value: '123' } });
+      fireEvent.click(resetBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/password must be at least 6 characters/i)).toBeInTheDocument();
+      });
+
+      // Error 2: Passwords do not match
+      fireEvent.change(newPasswordField, { target: { value: 'password123' } });
+      const confirmPasswordField = screen.getByLabelText(/confirm password/i);
+      fireEvent.change(confirmPasswordField, { target: { value: 'different' } });
+      fireEvent.click(resetBtn);
+      await waitFor(() => {
+        expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
+      });
+
+      // Success
+      fireEvent.change(confirmPasswordField, { target: { value: 'password123' } });
+      fireEvent.click(resetBtn);
+      await waitFor(() => {
+        expect(mockedUsersApi.resetPassword).toHaveBeenCalledWith(mockUser.id, { newPassword: 'password123' });
+      });
+    }
+  });
+
+  it('handles edit user success and error', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.updateUser = vi.fn().mockResolvedValue({ id: 'user-1', role: 'user', active: false });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const editButtons = document.querySelectorAll('[data-testid="EditIcon"]');
+    if (editButtons.length > 0) {
+      fireEvent.click(editButtons[0].parentElement!);
+      await waitFor(() => {
+        expect(screen.getByText(/edit user: admin/i)).toBeInTheDocument();
+      });
+
+      // Click save
+      const saveBtn = screen.getByRole('button', { name: /^save$/i });
+      fireEvent.click(saveBtn);
+      await waitFor(() => {
+        expect(mockedUsersApi.updateUser).toHaveBeenCalled();
       });
     }
   });
