@@ -201,7 +201,7 @@ jobs:
           echo "Waiting for services to be ready..."
 
           # Wait for MongoDB to be healthy
-          timeout 60 bash -c 'until docker compose ps | grep -q "app-env-manager-db.*healthy"; do sleep 2; done'
+          timeout 60 bash -c 'until [ "$(docker inspect --format="{{.State.Health.Status}}" app-env-manager-db 2>/dev/null)" = "healthy" ]; do sleep 2; done'
           echo "MongoDB is healthy"
 
           # Wait for backend to be ready with retries
