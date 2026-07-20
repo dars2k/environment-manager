@@ -462,4 +462,124 @@ describe('UpgradeEnvironmentDialog', () => {
       }
     });
   });
+
+  it('shows command preview for HTTP upgrade with body containing string and non-string values', async () => {
+    const httpEnv: Environment = {
+      ...mockEnvironment,
+      upgradeConfig: {
+        enabled: true,
+        type: 'http',
+        versionListURL: 'https://api.example.com/versions',
+        jsonPathResponse: '$.versions',
+        upgradeCommand: {
+          method: 'POST',
+          url: 'https://api.example.com/upgrade/{VERSION}',
+          body: {
+            version: '{VERSION}',
+            force: true,
+          }
+        }
+      }
+    };
+
+    mockedApi.getVersions = vi.fn().mockResolvedValue({
+      currentVersion: '3.1.0',
+      availableVersions: ['3.2.0'],
+    });
+
+    const { container } = render(
+      <UpgradeEnvironmentDialog
+        open={true}
+        onClose={vi.fn()}
+        environment={httpEnv}
+        onUpgrade={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/select version/i)).toBeInTheDocument();
+    });
+
+    const input = screen.getByLabelText(/select version/i);
+    fireEvent.mouseDown(input);
+    fireEvent.click(input);
+    fireEvent.change(input, { target: { value: '3.2.0' } });
+
+    await waitFor(() => {
+      const option = screen.queryByRole('option', { name: /3.2.0/i });
+      if (option) {
+        fireEvent.click(option);
+      }
+    });
+
+    await waitFor(() => {
+      const continueBtn = screen.queryByRole('button', { name: /continue/i });
+      if (continueBtn && !continueBtn.hasAttribute('disabled')) {
+        fireEvent.click(continueBtn);
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/POST https:\/\/api\.example\.com\/upgrade\/3\.2\.0/)).toBeInTheDocument();
+      expect(screen.getByText(/"version": "3\.2\.0"/)).toBeInTheDocument();
+      expect(screen.getByText(/"force": true/)).toBeInTheDocument();
+    });
+  });
+
+  it('shows command preview for HTTP upgrade without body', async () => {
+    const httpEnv: Environment = {
+      ...mockEnvironment,
+      upgradeConfig: {
+        enabled: true,
+        type: 'http',
+        versionListURL: 'https://api.example.com/versions',
+        jsonPathResponse: '$.versions',
+        upgradeCommand: {
+          method: 'GET',
+          url: 'https://api.example.com/upgrade/{VERSION}',
+        }
+      }
+    };
+
+    mockedApi.getVersions = vi.fn().mockResolvedValue({
+      currentVersion: '3.1.0',
+      availableVersions: ['3.2.0'],
+    });
+
+    render(
+      <UpgradeEnvironmentDialog
+        open={true}
+        onClose={vi.fn()}
+        environment={httpEnv}
+        onUpgrade={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/select version/i)).toBeInTheDocument();
+    });
+
+    const input = screen.getByLabelText(/select version/i);
+    fireEvent.mouseDown(input);
+    fireEvent.click(input);
+    fireEvent.change(input, { target: { value: '3.2.0' } });
+
+    await waitFor(() => {
+      const option = screen.queryByRole('option', { name: /3.2.0/i });
+      if (option) {
+        fireEvent.click(option);
+      }
+    });
+
+    await waitFor(() => {
+      const continueBtn = screen.queryByRole('button', { name: /continue/i });
+      if (continueBtn && !continueBtn.hasAttribute('disabled')) {
+        fireEvent.click(continueBtn);
+      }
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/GET https:\/\/api\.example\.com\/upgrade\/3\.2\.0/)).toBeInTheDocument();
+    });
+  });
 });
