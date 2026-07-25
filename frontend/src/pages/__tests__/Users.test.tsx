@@ -215,7 +215,7 @@ describe('Users page', () => {
     await waitFor(() => {
       expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
     });
-    const keyButtons = document.querySelectorAll('[data-testid="KeyIcon"]');
+    const keyButtons = document.querySelectorAll('[data-testid="VpnKeyIcon"]');
     if (keyButtons.length > 0) {
       fireEvent.click(keyButtons[0].parentElement!);
       await waitFor(() => {
@@ -229,6 +229,109 @@ describe('Users page', () => {
     render(<Users />);
     await waitFor(() => {
       expect(screen.getByText('Never')).toBeInTheDocument();
+    });
+  });
+
+  it('shows an error and does not delete when deleteUser fails', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.deleteUser = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Cannot delete last admin' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    const deleteButtons = document.querySelectorAll('[data-testid="DeleteIcon"]');
+    fireEvent.click(deleteButtons[0].parentElement!);
+    await waitFor(() => {
+      expect(screen.getAllByText(/delete user/i).length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^delete$/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Cannot delete last admin')).toBeInTheDocument();
+    });
+  });
+
+  it('validates new password length before calling resetPassword', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn();
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(document.querySelectorAll('[data-testid="VpnKeyIcon"]')[0].parentElement!);
+    await waitFor(() => {
+      expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: '123' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: '123' } });
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/at least 6 characters/i)).toBeInTheDocument();
+    });
+    expect(mockedUsersApi.resetPassword).not.toHaveBeenCalled();
+  });
+
+  it('validates password confirmation match before calling resetPassword', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn();
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(document.querySelectorAll('[data-testid="VpnKeyIcon"]')[0].parentElement!);
+    await waitFor(() => {
+      expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: 'password1' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password2' } });
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    await waitFor(() => {
+      expect(screen.getByText(/passwords do not match/i)).toBeInTheDocument();
+    });
+    expect(mockedUsersApi.resetPassword).not.toHaveBeenCalled();
+  });
+
+  it('shows a server error message when resetPassword fails', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn().mockRejectedValue({
+      response: { data: { error: 'Password policy violation' } },
+    });
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(document.querySelectorAll('[data-testid="VpnKeyIcon"]')[0].parentElement!);
+    await waitFor(() => {
+      expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: 'password1' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password1' } });
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    await waitFor(() => {
+      expect(screen.getByText('Password policy violation')).toBeInTheDocument();
+    });
+  });
+
+  it('resets the password successfully and closes the dialog', async () => {
+    mockedUsersApi.listUsers = vi.fn().mockResolvedValue([mockUser]);
+    mockedUsersApi.resetPassword = vi.fn().mockResolvedValue(undefined);
+    render(<Users />);
+    await waitFor(() => {
+      expect(screen.getAllByText('admin').length).toBeGreaterThanOrEqual(1);
+    });
+    fireEvent.click(document.querySelectorAll('[data-testid="VpnKeyIcon"]')[0].parentElement!);
+    await waitFor(() => {
+      expect(screen.getByText(/reset password for/i)).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText('New Password'), { target: { value: 'password1' } });
+    fireEvent.change(screen.getByLabelText('Confirm Password'), { target: { value: 'password1' } });
+    fireEvent.click(screen.getByRole('button', { name: /reset password/i }));
+    await waitFor(() => {
+      expect(mockedUsersApi.resetPassword).toHaveBeenCalledWith(mockUser.id, { newPassword: 'password1' });
+    });
+    await waitFor(() => {
+      expect(screen.queryByText(/reset password for/i)).not.toBeInTheDocument();
     });
   });
 });
