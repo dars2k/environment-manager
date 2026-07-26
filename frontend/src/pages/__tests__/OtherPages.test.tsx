@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@/test/test-utils';
 import { NotFound } from '../NotFound';
 import { CreateEnvironment } from '../CreateEnvironment';
@@ -28,10 +28,31 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
+// Mock EnvironmentForm component and wrap the asynchronous submission handler in try-catch to swallow rejected promises
+vi.mock('@/components/environments/EnvironmentForm', () => ({
+  EnvironmentForm: ({ onSubmit, error }: any) => (
+    <div>
+      {error && <div>{error}</div>}
+      <button
+        onClick={async () => {
+          try {
+            await onSubmit(mockEnvironment, 'new-password', 'new-key');
+          } catch (e) {
+            // Swallow rejected promises to prevent unhandled promise rejections in tests
+          }
+        }}
+      >
+        Submit Form Mock
+      </button>
+    </div>
+  ),
+}));
+
 const mockEnvironment = {
   id: 'env-1',
   name: 'Test Env',
   description: 'desc',
+  environmentURL: 'https://test.example.com',
   target: { host: 'localhost', port: 22 },
   credentials: { type: 'password', username: 'user' },
   healthCheck: { enabled: false, endpoint: '/health', method: 'GET', interval: 60, timeout: 10, validation: { type: 'statusCode', value: 200 } },
@@ -67,7 +88,7 @@ describe('CreateEnvironment page', () => {
 
   it('renders the environment form', () => {
     render(<CreateEnvironment />);
-    expect(screen.getByRole('button', { name: /create environment/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Submit Form Mock/i })).toBeInTheDocument();
   });
 
   it('calls environmentApi.create on form submission', async () => {
@@ -75,15 +96,16 @@ describe('CreateEnvironment page', () => {
     const user = (await import('@testing-library/user-event')).default;
     const u = user.setup({ delay: null });
     render(<CreateEnvironment />);
-    await u.type(screen.getByLabelText(/^environment name\s*\*/i), 'Test');
-    await u.type(screen.getByLabelText(/^environment url/i), 'https://test.example.com');
-    await u.click(screen.getByRole('button', { name: /create environment/i }));
-    // Note: form may fail validation (no host/user), that's OK
-    expect(screen.getByRole('button', { name: /create environment/i })).toBeInTheDocument();
-  }, 15000);
+    await u.click(screen.getByRole('button', { name: /Submit Form Mock/i }));
+    expect(mockedEnvApi.create).toHaveBeenCalled();
+  });
 });
 
 describe('EditEnvironment page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('shows loading spinner while fetching', () => {
     mockedEnvApi.get = vi.fn(() => new Promise(() => {}));
     render(<EditEnvironment />);
@@ -111,6 +133,66 @@ describe('EditEnvironment page', () => {
     render(<EditEnvironment />);
     await waitFor(() => {
       expect(screen.getByText(/test env/i)).toBeInTheDocument();
+    });
+  });
+
+  it('handles successful update on form submission with password metadata', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockResolvedValue({ id: 'env-1' });
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/edit environment/i)).toBeInTheDocument();
+    });
+
+    // Submit the form
+    const saveButton = screen.getByRole('button', { name: /Submit Form Mock/i });
+    await u.click(saveButton);
+
+    await waitFor(() => {
+      expect(mockedEnvApi.update).toHaveBeenCalled();
+    });
+  });
+
+  it('handles failed update and displays error alert', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockImplementation(() => Promise.reject({
+      response: { data: { message: 'Some API Error' } }
+    }));
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/edit environment/i)).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole('button', { name: /Submit Form Mock/i });
+    await u.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Some API Error')).toBeInTheDocument();
+    });
+  });
+
+  it('handles failed update with fallback generic error', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    mockedEnvApi.update = vi.fn().mockImplementation(() => Promise.reject(new Error('Generic Error')));
+    const user = (await import('@testing-library/user-event')).default;
+    const u = user.setup({ delay: null });
+
+    render(<EditEnvironment />);
+    await waitFor(() => {
+      expect(screen.getByText(/edit environment/i)).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole('button', { name: /Submit Form Mock/i });
+    await u.click(saveButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Failed to update environment')).toBeInTheDocument();
     });
   });
 });

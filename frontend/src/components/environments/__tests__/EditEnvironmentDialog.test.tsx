@@ -172,9 +172,9 @@ describe('EditEnvironmentDialog', () => {
   });
 
   it('shows error on failed update', async () => {
-    mockedApi.update = vi.fn().mockRejectedValue({
+    mockedApi.update = vi.fn().mockImplementation(() => Promise.reject({
       response: { data: { message: 'Update failed' } },
-    });
+    }));
     const store = createTestStore();
     store.dispatch(setEnvironmentEditDialogOpen(true));
     render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
@@ -184,6 +184,7 @@ describe('EditEnvironmentDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /^update$/i }));
     await waitFor(() => {
       expect(mockedApi.update).toHaveBeenCalled();
+      expect(screen.getByText('Update failed')).toBeInTheDocument();
     });
   });
 
