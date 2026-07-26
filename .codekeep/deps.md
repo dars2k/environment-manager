@@ -36,7 +36,6 @@ No major bumps skipped during this minor-only update.
 | Package | Old | New | Breaking? |
 |---|---|---|---|
 | @testing-library/jest-dom | 6.9.1 | 6.10.0 | No |
-| @types/node | 22.19.15 | 22.20.1 | No |
 | @types/react | 18.3.28 | 18.3.31 | No |
 | @vitest/coverage-v8 | 3.2.4 | 3.2.7 | No |
 | @vitest/ui | 3.2.4 | 3.2.7 | No |

@@ -1,6 +1,6 @@
 ## Summary
 
-- **P1 – Dependency updates**: Applied semver-safe minor/patch bumps for Go (18 packages updated) and npm (10 packages updated). All tests are completely functional after updates.
+- **P1 – Dependency updates**: Applied semver-safe minor/patch bumps for Go (18 packages updated) and npm (9 packages updated). Reverted `@types/node` to `^22.19.15` to ensure consistent package registry resolution across CI and local systems. All tests are completely functional after updates.
 - **P2 – Coverage uplift**: Added comprehensive unit test coverage targeting files below 90% threshold. Successfully raised frontend page `EditEnvironment.tsx` coverage from 64.29% to 97.61%, and overall frontend statement coverage has risen to 92.75%. Overall Go backend coverage is excellent at 92.3%.
 - **P3 – QA**: Performed exhaustive QA review, verifying logical correctness and concurrency safety via `go test -race ./...`. No issues found.
 
@@ -37,7 +37,6 @@
 | axios | 1.15.2 | 1.18.1 | No |
 | react-router-dom | 6.30.3 | 6.30.4 | No |
 | @testing-library/jest-dom | 6.9.1 | 6.10.0 | No |
-| @types/node | 22.19.15 | 22.20.1 | No |
 | @types/react | 18.3.28 | 18.3.31 | No |
 | @vitest/coverage-v8 | 3.2.4 | 3.2.7 | No |
 | @vitest/ui | 3.2.4 | 3.2.7 | No |
