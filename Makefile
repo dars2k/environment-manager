@@ -53,7 +53,7 @@ clean:
 # Run tests
 test:
 	cd backend && go test ./...
-	cd frontend && npm test
+	cd frontend && bun run test --run
 
 # Development mode
 dev:
