@@ -109,6 +109,9 @@ go.work
 debug/
 *.stackdump
 
+# codekeep working state
+.codekeep/
+
 # Package files
 *.jar
 *.war

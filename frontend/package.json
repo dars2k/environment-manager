@@ -47,7 +47,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.9.6",
     "typescript": "^5.9.3",
-    "vite": "7.3.2",
+    "vite": "7.3.6",
     "vitest": "^3.2.7"
   },
   "scripts": {
@@ -61,7 +61,8 @@
     "test:coverage": "vitest --coverage"
   },
   "overrides": {
-    "minimatch": "9.0.9"
+    "minimatch": "9.0.9",
+    "esbuild": "^0.28.1"
   },
   "browserslist": {
     "production": [
