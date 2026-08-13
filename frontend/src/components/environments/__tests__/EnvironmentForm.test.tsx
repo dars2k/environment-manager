@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@/test/test-utils';
+import { render, screen, waitFor, fireEvent } from '@/test/test-utils';
 import userEvent from '@testing-library/user-event';
 import { EnvironmentForm } from '../EnvironmentForm';
 import { Environment, HealthStatus } from '@/types/environment';
@@ -608,4 +608,338 @@ describe('EnvironmentForm', () => {
       }
     });
   });
+
+  it('handleHttpRestartChange falls back to raw string when body is invalid JSON', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Restart is enabled by default and SSH is disabled → HTTP restart config visible
+    const bodyField = await screen.findByLabelText(/request body/i);
+
+    fireEvent.change(bodyField, { target: { value: '{invalid json' } });
+
+    // The catch branch in handleHttpRestartChange stores the raw string back
+    // (rather than throwing), so the field should reflect the typed value.
+    await waitFor(() => {
+      expect((bodyField as HTMLInputElement).value).toBe('{invalid json');
+    });
+
+    // Typing valid JSON afterwards should also be reflected (parsed then re-serialized
+    // back through the typeof === 'string' ternary once stored as an object is no longer
+    // a string, but our immediate re-render still shows the raw text the user typed).
+    fireEvent.change(bodyField, { target: { value: '{"key":"value"}' } });
+    await waitFor(() => {
+      expect((bodyField as HTMLInputElement).value).toBe('{"key":"value"}');
+    });
+  });
+
+  it('handleHttpUpgradeChange falls back to raw string when body is invalid JSON', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable upgrade (SSH disabled → HTTP mode for the upgrade command section)
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/upgrade endpoint/i)).toBeInTheDocument();
+    });
+
+    // There are now two "Request Body" fields: restart's and the upgrade command's.
+    // The upgrade command one is the last in the DOM.
+    const bodyFields = screen.getAllByLabelText(/request body/i);
+    const upgradeBodyField = bodyFields[bodyFields.length - 1];
+
+    fireEvent.change(upgradeBodyField, { target: { value: 'not { valid json' } });
+
+    await waitFor(() => {
+      expect((upgradeBodyField as HTMLInputElement).value).toBe('not { valid json');
+    });
+  });
+
+  it('disabling SSH control after enabling it resets fields back to the disabled state', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const sshCheckbox = screen.getByLabelText(/enable ssh control/i);
+
+    // Enable
+    await user.click(sshCheckbox);
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh host/i)).toBeInTheDocument();
+    });
+
+    // Disable again - exercises the reset branch inside the checkbox onChange handler
+    await user.click(sshCheckbox);
+    await waitFor(() => {
+      expect(screen.queryByLabelText(/ssh host/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/ssh control is disabled/i)).toBeInTheDocument();
+    });
+  });
+
+  it('updates the SSH port field', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh port/i)).toBeInTheDocument();
+    });
+
+    const portField = screen.getByLabelText(/ssh port/i) as HTMLInputElement;
+    fireEvent.change(portField, { target: { value: '2222' } });
+
+    expect(portField.value).toBe('2222');
+  }, 15000);
+
+  it('clicking directly on the health check accordion summary does not toggle the switch', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const summary = screen.getByText('Health Check Configuration').closest('.MuiAccordionSummary-root');
+    expect(summary).toBeTruthy();
+
+    const switchInput = document.querySelectorAll('.MuiSwitch-input')[0] as HTMLInputElement;
+    expect(switchInput.checked).toBe(false);
+
+    fireEvent.click(summary as Element);
+
+    // The onClick handler calls preventDefault when clicking the summary bar itself,
+    // so the underlying switch state should be unaffected by this click.
+    expect(switchInput.checked).toBe(false);
+  });
+
+  it('clicking directly on the restart accordion summary does not toggle the switch', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const summary = screen.getByText('Restart Configuration').closest('.MuiAccordionSummary-root');
+    expect(summary).toBeTruthy();
+
+    const switchInput = document.querySelectorAll('.MuiSwitch-input')[1] as HTMLInputElement;
+    expect(switchInput.checked).toBe(true);
+
+    fireEvent.click(summary as Element);
+
+    expect(switchInput.checked).toBe(true);
+  });
+
+  it('clicking directly on the upgrade accordion summary does not toggle the switch', async () => {
+    const onSubmit = vi.fn();
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const summary = screen.getByText('Upgrade Configuration').closest('.MuiAccordionSummary-root');
+    expect(summary).toBeTruthy();
+
+    const switchInput = document.querySelectorAll('.MuiSwitch-input')[2] as HTMLInputElement;
+    expect(switchInput.checked).toBe(false);
+
+    fireEvent.click(summary as Element);
+
+    expect(switchInput.checked).toBe(false);
+  });
+
+  it('updates all health check fields when health check is enabled', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[0] as HTMLElement);
+
+    // Endpoint
+    const endpointField = await screen.findByLabelText(/health check endpoint/i);
+    await user.clear(endpointField);
+    await user.type(endpointField, '/status');
+    expect((endpointField as HTMLInputElement).value).toBe('/status');
+
+    // HTTP Method select
+    const methodSelect = screen.getByLabelText(/http method/i);
+    await user.click(methodSelect);
+    const postOption = await screen.findByRole('option', { name: 'POST' });
+    await user.click(postOption);
+    await waitFor(() => {
+      expect(screen.getByLabelText(/http method/i)).toHaveTextContent('POST');
+    });
+
+    // Interval
+    const intervalField = screen.getByLabelText(/check interval/i) as HTMLInputElement;
+    fireEvent.change(intervalField, { target: { value: '60' } });
+    expect(intervalField.value).toBe('60');
+
+    // Timeout
+    const timeoutField = screen.getByLabelText(/timeout \(seconds\)/i) as HTMLInputElement;
+    fireEvent.change(timeoutField, { target: { value: '15' } });
+    expect(timeoutField.value).toBe('15');
+  }, 15000);
+
+  it('changes validation type to JSON Regex and updates helper text and expected value', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[0] as HTMLElement);
+
+    const expectedValueField = await screen.findByLabelText(/expected value/i);
+    expect(screen.getByText(/expected http status code/i)).toBeInTheDocument();
+
+    // Default statusCode validation - typing updates the numeric value
+    fireEvent.change(expectedValueField, { target: { value: '404' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('404');
+
+    // Switch validation type to JSON Regex
+    const validationTypeSelect = screen.getByLabelText(/validation type/i);
+    await user.click(validationTypeSelect);
+    const regexOption = await screen.findByRole('option', { name: 'JSON Regex' });
+    await user.click(regexOption);
+
+    await waitFor(() => {
+      expect(screen.getByText(/regular expression to match in response/i)).toBeInTheDocument();
+    });
+
+    const expectedValueFieldAfter = screen.getByLabelText(/expected value/i);
+    fireEvent.change(expectedValueFieldAfter, { target: { value: 'success' } });
+    expect((expectedValueFieldAfter as HTMLInputElement).value).toBe('success');
+  }, 15000);
+
+  it('switches restart command type to SSH and updates the SSH restart command field', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable SSH control so the "SSH" command type option becomes selectable
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh host/i)).toBeInTheDocument();
+    });
+
+    const commandTypeSelect = screen.getByLabelText(/command type/i);
+    await user.click(commandTypeSelect);
+    const sshOption = await screen.findByRole('option', { name: 'SSH' });
+    await user.click(sshOption);
+
+    const sshCommandField = await screen.findByLabelText(/ssh restart command/i);
+    await user.type(sshCommandField, 'sudo systemctl restart myapp');
+
+    expect((sshCommandField as HTMLInputElement).value).toBe('sudo systemctl restart myapp');
+  }, 15000);
+
+  it('updates the version list URL and JSONPath response fields when upgrade is enabled', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    const versionListUrlField = await screen.findByLabelText(/version list url/i);
+    fireEvent.change(versionListUrlField, { target: { value: 'https://api.example.com/versions' } });
+    expect((versionListUrlField as HTMLInputElement).value).toBe('https://api.example.com/versions');
+
+    const jsonPathField = screen.getByLabelText(/jsonpath response/i);
+    fireEvent.change(jsonPathField, { target: { value: '$.data[*]' } });
+    expect((jsonPathField as HTMLInputElement).value).toBe('$.data[*]');
+  }, 15000);
+
+  it('switches upgrade command type to SSH and updates the SSH upgrade commands field', async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup({ delay: null });
+
+    render(
+      <EnvironmentForm
+        onSubmit={onSubmit}
+        mode="create"
+      />
+    );
+
+    // Enable SSH control
+    await user.click(screen.getByLabelText(/enable ssh control/i));
+    await waitFor(() => {
+      expect(screen.getByLabelText(/ssh host/i)).toBeInTheDocument();
+    });
+
+    // Enable upgrade
+    const switchInputs = document.querySelectorAll('.MuiSwitch-input');
+    await user.click(switchInputs[2] as HTMLElement);
+
+    const upgradeTypeSelect = await screen.findByLabelText(/upgrade command type/i);
+    await user.click(upgradeTypeSelect);
+    const sshOption = await screen.findByRole('option', { name: 'SSH' });
+    await user.click(sshOption);
+
+    const sshUpgradeField = await screen.findByLabelText(/ssh upgrade commands/i);
+    fireEvent.change(sshUpgradeField, { target: { value: 'sudo app-upgrade --version={VERSION}' } });
+
+    expect((sshUpgradeField as HTMLInputElement).value).toBe('sudo app-upgrade --version={VERSION}');
+  }, 15000);
 });

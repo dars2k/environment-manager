@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@/test/test-utils';
 import { EnvironmentDetails } from '../EnvironmentDetails';
 import { environmentApi } from '@/api/environments';
@@ -18,9 +19,10 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock useEnvironmentActions hook
+const mockDeleteEnvironment = vi.fn();
 vi.mock('@/hooks/useEnvironmentActions', () => ({
   useEnvironmentActions: () => ({
-    deleteEnvironment: vi.fn(),
+    deleteEnvironment: mockDeleteEnvironment,
     restartEnvironment: vi.fn(),
     upgradeEnvironment: vi.fn(),
     checkHealth: vi.fn(),
@@ -109,5 +111,109 @@ describe('EnvironmentDetails page', () => {
     await waitFor(() => {
       expect(screen.getByText(/unknown/i)).toBeInTheDocument();
     });
+  });
+
+  it('deletes the environment and navigates to the dashboard when delete button clicked', async () => {
+    mockedEnvApi.get = vi.fn().mockResolvedValue(mockEnvironment);
+    render(<EnvironmentDetails />);
+    await waitFor(() => {
+      expect(screen.getByText('Production')).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /delete environment/i }));
+
+    expect(mockDeleteEnvironment).toHaveBeenCalledWith('env-1');
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
+  });
+
+  it('shows "Not available" for missing app version and last system update', async () => {
+    const envMissingSystemInfo = {
+      ...mockEnvironment,
+      systemInfo: { osVersion: 'Ubuntu 22.04', appVersion: '', lastUpdated: '' },
+    };
+    mockedEnvApi.get = vi.fn().mockResolvedValue(envMissingSystemInfo);
+    render(<EnvironmentDetails />);
+    await waitFor(() => {
+      expect(screen.getByText('Production')).toBeInTheDocument();
+    });
+
+    // System Info tab is the default tab (index 0), so no click needed.
+    const notAvailable = screen.getAllByText('Not available');
+    // One for Application Version, one for Last System Update, plus the
+    // static hint text inside the info Alert ("...show Not available until...").
+    expect(notAvailable).toHaveLength(3);
+  });
+
+  it('shows "N/A" for zero response time on the Health Check tab', async () => {
+    const envZeroResponseTime = {
+      ...mockEnvironment,
+      status: { ...mockEnvironment.status, responseTime: 0 },
+    };
+    mockedEnvApi.get = vi.fn().mockResolvedValue(envZeroResponseTime);
+    render(<EnvironmentDetails />);
+    await waitFor(() => {
+      expect(screen.getByText('Production')).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('tab', { name: /health check/i }));
+
+    expect(await screen.findByText('N/A')).toBeInTheDocument();
+  });
+
+  it('renders HTTP restart command fields and the missing-command warning on the Commands tab', async () => {
+    const envHttpCommands = {
+      ...mockEnvironment,
+      commands: {
+        type: 'http' as const,
+        restart: { enabled: true, url: '', method: '' },
+      },
+    };
+    mockedEnvApi.get = vi.fn().mockResolvedValue(envHttpCommands);
+    render(<EnvironmentDetails />);
+    await waitFor(() => {
+      expect(screen.getByText('Production')).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('tab', { name: /commands/i }));
+
+    expect(await screen.findByText('HTTP Endpoint')).toBeInTheDocument();
+    // Falls back to "Not configured" since url is empty.
+    expect(screen.getAllByText('Not configured').length).toBeGreaterThan(0);
+    // Falls back to POST since method is empty.
+    expect(screen.getByText('POST')).toBeInTheDocument();
+    // Neither command nor url is configured -> warning alert shown.
+    expect(screen.getByText(/no restart command configured/i)).toBeInTheDocument();
+  });
+
+  it('renders HTTP upgrade command fields and empty version list/JSONPath fallbacks on the Upgrade Config tab', async () => {
+    const envHttpUpgrade = {
+      ...mockEnvironment,
+      upgradeConfig: {
+        enabled: true,
+        type: 'http' as const,
+        versionListURL: '',
+        jsonPathResponse: '',
+        upgradeCommand: { url: '', method: '' },
+      },
+    };
+    mockedEnvApi.get = vi.fn().mockResolvedValue(envHttpUpgrade);
+    render(<EnvironmentDetails />);
+    await waitFor(() => {
+      expect(screen.getByText('Production')).toBeInTheDocument();
+    });
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('tab', { name: /upgrade config/i }));
+
+    expect(await screen.findByText('Version List URL')).toBeInTheDocument();
+    expect(screen.getByText('JSONPath Response')).toBeInTheDocument();
+    expect(screen.getByText('HTTP Endpoint')).toBeInTheDocument();
+    // versionListURL, jsonPathResponse and upgradeCommand.url are all empty.
+    expect(screen.getAllByText('Not configured').length).toBe(3);
+    // upgradeCommand.method is empty -> falls back to POST.
+    expect(screen.getByText('POST')).toBeInTheDocument();
   });
 });
