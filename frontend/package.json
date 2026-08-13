@@ -61,8 +61,7 @@
     "test:coverage": "vitest --coverage"
   },
   "overrides": {
-    "minimatch": "9.0.9",
-    "esbuild": "^0.28.1"
+    "minimatch": "9.0.9"
   },
   "browserslist": {
     "production": [
