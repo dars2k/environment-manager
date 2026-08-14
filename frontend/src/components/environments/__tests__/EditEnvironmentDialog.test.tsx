@@ -384,4 +384,217 @@ describe('EditEnvironmentDialog', () => {
       }
     });
   });
+
+  it('updates host field via onChange handler', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('prod.example.com')).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByDisplayValue('prod.example.com'), {
+      target: { value: 'new-host.example.com' },
+    });
+    expect(screen.getByDisplayValue('new-host.example.com')).toBeInTheDocument();
+  });
+
+  it('updates port field and falls back to 22 on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const portField = await screen.findByLabelText(/^port\s*\*/i);
+    fireEvent.change(portField, { target: { value: '2222' } });
+    expect((portField as HTMLInputElement).value).toBe('2222');
+
+    fireEvent.change(portField, { target: { value: '' } });
+    expect((portField as HTMLInputElement).value).toBe('22');
+  });
+
+  it('updates username field via onChange handler', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const usernameField = await screen.findByLabelText(/^username\s*\*/i);
+    fireEvent.change(usernameField, { target: { value: 'newuser' } });
+    expect((usernameField as HTMLInputElement).value).toBe('newuser');
+  });
+
+  it('switches credential type to key and shows/edits the private key field', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const authSelect = await screen.findByRole('combobox', { name: /authentication method/i });
+
+    // Password field is shown initially, private key is not
+    expect(screen.getByLabelText(/^password\s*\*/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^private key\s*\*/i)).toBeNull();
+
+    fireEvent.mouseDown(authSelect);
+    const keyOption = await screen.findByRole('option', { name: /private key/i });
+    fireEvent.click(keyOption);
+
+    const privateKeyField = await screen.findByLabelText(/^private key\s*\*/i);
+    expect(screen.queryByLabelText(/^password\s*\*/i)).toBeNull();
+    fireEvent.change(privateKeyField, { target: { value: '-----BEGIN KEY-----' } });
+    expect((privateKeyField as HTMLTextAreaElement).value).toBe('-----BEGIN KEY-----');
+  });
+
+  it('updates health check endpoint field', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const endpointField = await screen.findByLabelText(/health check endpoint/i);
+    fireEvent.change(endpointField, { target: { value: '/status' } });
+    expect((endpointField as HTMLInputElement).value).toBe('/status');
+  });
+
+  it('updates health check interval and falls back to 300 on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const intervalField = await screen.findByLabelText(/health check interval/i);
+    fireEvent.change(intervalField, { target: { value: '120' } });
+    expect((intervalField as HTMLInputElement).value).toBe('120');
+
+    fireEvent.change(intervalField, { target: { value: '' } });
+    expect((intervalField as HTMLInputElement).value).toBe('300');
+  });
+
+  it('updates health check timeout and falls back to 30 on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const timeoutField = await screen.findByLabelText(/health check timeout/i);
+    fireEvent.change(timeoutField, { target: { value: '15' } });
+    expect((timeoutField as HTMLInputElement).value).toBe('15');
+
+    fireEvent.change(timeoutField, { target: { value: '' } });
+    expect((timeoutField as HTMLInputElement).value).toBe('30');
+  });
+
+  it('switches validation type to jsonRegex and resets expected value to empty string', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const validationSelect = await screen.findByRole('combobox', { name: /validation type/i });
+
+    expect(screen.getByDisplayValue('200')).toBeInTheDocument();
+
+    fireEvent.mouseDown(validationSelect);
+    const jsonRegexOption = await screen.findByRole('option', { name: /json regex/i });
+    fireEvent.click(jsonRegexOption);
+
+    const expectedValueField = await screen.findByLabelText(/expected value/i);
+    expect((expectedValueField as HTMLInputElement).value).toBe('');
+
+    // With jsonRegex selected, typed value is stored as a raw string
+    fireEvent.change(expectedValueField, { target: { value: 'ok-pattern' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('ok-pattern');
+  });
+
+  it('updates expected value as a parsed number when validation type is statusCode', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const expectedValueField = await screen.findByLabelText(/expected value/i);
+    fireEvent.change(expectedValueField, { target: { value: '404' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('404');
+
+    // Invalid number input falls back to 200
+    fireEvent.change(expectedValueField, { target: { value: '' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('200');
+  });
+
+  it('updates the restart HTTP method field', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeSelect = await screen.findByRole('combobox', { name: /^command type$/i });
+    fireEvent.mouseDown(commandTypeSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const methodSelect = await screen.findByRole('combobox', { name: /^method$/i });
+    expect(methodSelect).toHaveTextContent('POST');
+    fireEvent.mouseDown(methodSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^put$/i }));
+    expect(methodSelect).toHaveTextContent('PUT');
+  });
+
+  it('updates the restart headers field with valid JSON and ignores invalid JSON', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeSelect = await screen.findByRole('combobox', { name: /^command type$/i });
+    fireEvent.mouseDown(commandTypeSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const headersField = await screen.findByLabelText(/headers \(optional\)/i);
+    expect((headersField as HTMLTextAreaElement).value).toBe('{}');
+
+    fireEvent.change(headersField, { target: { value: '{"Authorization":"Bearer abc"}' } });
+    expect((headersField as HTMLTextAreaElement).value).toBe('{"Authorization":"Bearer abc"}');
+
+    // Invalid JSON should be silently ignored (state unchanged)
+    fireEvent.change(headersField, { target: { value: '{not valid json' } });
+    expect((headersField as HTMLTextAreaElement).value).toBe('{"Authorization":"Bearer abc"}');
+  });
+
+  it('updates the restart body field with valid JSON and ignores invalid JSON', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeSelect = await screen.findByRole('combobox', { name: /^command type$/i });
+    fireEvent.mouseDown(commandTypeSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const bodyField = await screen.findByLabelText(/body \(optional\)/i);
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{}');
+
+    fireEvent.change(bodyField, { target: { value: '{"action":"restart"}' } });
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{"action":"restart"}');
+
+    // Invalid JSON should be silently ignored (state unchanged)
+    fireEvent.change(bodyField, { target: { value: '{still not valid' } });
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{"action":"restart"}');
+  });
+
+  it('updates jsonPathResponse field in upgrade configuration', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/upgrade configuration \(optional\)/i));
+    fireEvent.click(await screen.findByLabelText(/enable version upgrades/i));
+
+    const jsonPathField = await screen.findByLabelText(/jsonpath response/i);
+    fireEvent.change(jsonPathField, { target: { value: '$.data.releases[*]' } });
+    expect((jsonPathField as HTMLInputElement).value).toBe('$.data.releases[*]');
+  });
+
+  it('switches upgrade command type to HTTP and updates the URL and Method fields', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/upgrade configuration \(optional\)/i));
+    fireEvent.click(await screen.findByLabelText(/enable version upgrades/i));
+
+    const upgradeTypeSelect = await screen.findByRole('combobox', { name: /upgrade command type/i });
+    fireEvent.mouseDown(upgradeTypeSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const upgradeUrlField = await screen.findByLabelText(/^url\s*\*?$/i);
+    fireEvent.change(upgradeUrlField, { target: { value: 'http://myserver/upgrade/{VERSION}' } });
+    expect((upgradeUrlField as HTMLInputElement).value).toBe('http://myserver/upgrade/{VERSION}');
+
+    const upgradeMethodSelect = await screen.findByRole('combobox', { name: /^method$/i });
+    expect(upgradeMethodSelect).toHaveTextContent('POST');
+    fireEvent.mouseDown(upgradeMethodSelect);
+    fireEvent.click(await screen.findByRole('option', { name: /^patch$/i }));
+    expect(upgradeMethodSelect).toHaveTextContent('PATCH');
+  });
 });
