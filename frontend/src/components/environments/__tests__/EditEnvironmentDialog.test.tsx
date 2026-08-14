@@ -380,7 +380,112 @@ describe('EditEnvironmentDialog', () => {
     await waitFor(() => {
       const upgradeUrlField = screen.queryByPlaceholderText(/localhost:8080\/upgrade/i);
       if (upgradeUrlField) {
-        expect(upgradeUrlField).toBeInTheDocument();
+        fireEvent.change(upgradeUrlField, { target: { value: 'http://my-upgrade-server/upgrade' } });
+        expect((upgradeUrlField as HTMLInputElement).value).toBe('http://my-upgrade-server/upgrade');
+      }
+    });
+
+    // Also change the method
+    const methodSelect = screen.getByLabelText(/^method$/i);
+    fireEvent.mouseDown(methodSelect);
+    await waitFor(() => {
+      const putOption = screen.getByRole('option', { name: /put/i });
+      fireEvent.click(putOption);
+    });
+  });
+
+  it('handles invalid headers JSON in HTTP restart command section', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    await waitFor(() => {
+      expect(screen.getByText(/custom commands \(optional\)/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/custom commands \(optional\)/i));
+
+    // Switch to HTTP first
+    await waitFor(() => {
+      const commandTypeField = screen.queryByLabelText(/^command type$/i);
+      if (commandTypeField) {
+        fireEvent.mouseDown(commandTypeField);
+      }
+    });
+    await waitFor(() => {
+      const httpOption = screen.queryByRole('option', { name: /^http$/i });
+      if (httpOption) {
+        fireEvent.click(httpOption);
+      }
+    });
+
+    await waitFor(() => {
+      const headersField = screen.queryByLabelText(/headers \(optional\)/i);
+      if (headersField) {
+        fireEvent.change(headersField, { target: { value: '{invalid-json' } });
+        expect(headersField).toBeInTheDocument();
+      }
+    });
+  });
+
+  it('changes body JSON in HTTP restart command section', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    await waitFor(() => {
+      expect(screen.getByText(/custom commands \(optional\)/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/custom commands \(optional\)/i));
+
+    // Switch to HTTP first
+    await waitFor(() => {
+      const commandTypeField = screen.queryByLabelText(/^command type$/i);
+      if (commandTypeField) {
+        fireEvent.mouseDown(commandTypeField);
+      }
+    });
+    await waitFor(() => {
+      const httpOption = screen.queryByRole('option', { name: /^http$/i });
+      if (httpOption) {
+        fireEvent.click(httpOption);
+      }
+    });
+
+    await waitFor(() => {
+      const bodyField = screen.queryByLabelText(/body \(optional\)/i);
+      if (bodyField) {
+        fireEvent.change(bodyField, { target: { value: '{"action": "restart"}' } });
+        expect(bodyField).toBeInTheDocument();
+      }
+    });
+  });
+
+  it('handles invalid body JSON in HTTP restart command section', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    await waitFor(() => {
+      expect(screen.getByText(/custom commands \(optional\)/i)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(/custom commands \(optional\)/i));
+
+    // Switch to HTTP first
+    await waitFor(() => {
+      const commandTypeField = screen.queryByLabelText(/^command type$/i);
+      if (commandTypeField) {
+        fireEvent.mouseDown(commandTypeField);
+      }
+    });
+    await waitFor(() => {
+      const httpOption = screen.queryByRole('option', { name: /^http$/i });
+      if (httpOption) {
+        fireEvent.click(httpOption);
+      }
+    });
+
+    await waitFor(() => {
+      const bodyField = screen.queryByLabelText(/body \(optional\)/i);
+      if (bodyField) {
+        fireEvent.change(bodyField, { target: { value: '{invalid-json' } });
+        expect(bodyField).toBeInTheDocument();
       }
     });
   });
