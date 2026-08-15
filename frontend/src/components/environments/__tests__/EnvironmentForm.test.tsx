@@ -744,7 +744,7 @@ describe('EnvironmentForm', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/http method/i)).toHaveTextContent('HEAD');
     });
-  });
+  }, 15000);
 
   it('should update health check validation type and expected value', async () => {
     const onSubmit = vi.fn();

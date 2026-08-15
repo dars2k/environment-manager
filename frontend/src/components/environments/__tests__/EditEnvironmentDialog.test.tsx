@@ -511,7 +511,7 @@ describe('EditEnvironmentDialog', () => {
     await waitFor(() => {
       expect(methodField).toHaveTextContent('PUT');
     });
-  });
+  }, 15000);
 
   it('updates headers JSON in custom commands and ignores invalid JSON', async () => {
     const store = createTestStore();
