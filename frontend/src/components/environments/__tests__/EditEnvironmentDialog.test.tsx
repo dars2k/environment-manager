@@ -384,4 +384,214 @@ describe('EditEnvironmentDialog', () => {
       }
     });
   });
+
+  it('updates the host field value', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const hostField = await screen.findByLabelText(/^host/i);
+    fireEvent.change(hostField, { target: { value: 'staging.example.com' } });
+    expect((hostField as HTMLInputElement).value).toBe('staging.example.com');
+  });
+
+  it('updates the port field and falls back to 22 on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const portField = await screen.findByLabelText(/^port/i);
+    fireEvent.change(portField, { target: { value: '2222' } });
+    expect((portField as HTMLInputElement).value).toBe('2222');
+    fireEvent.change(portField, { target: { value: '' } });
+    expect((portField as HTMLInputElement).value).toBe('22');
+  });
+
+  it('updates the username field value', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const usernameField = await screen.findByLabelText(/^username/i);
+    fireEvent.change(usernameField, { target: { value: 'newuser' } });
+    expect((usernameField as HTMLInputElement).value).toBe('newuser');
+  });
+
+  it('switches authentication method to private key and updates the key field', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const authSelect = await screen.findByLabelText(/^authentication method/i);
+
+    // Password field should be present initially
+    expect(screen.getByLabelText(/^password/i, { selector: 'input' })).toBeInTheDocument();
+
+    fireEvent.mouseDown(authSelect);
+    const keyOption = await screen.findByRole('option', { name: /private key/i });
+    fireEvent.click(keyOption);
+
+    const privateKeyField = await screen.findByLabelText(/^private key/i, { selector: 'textarea' });
+    expect(privateKeyField).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^password/i, { selector: 'input' })).toBeNull();
+
+    fireEvent.change(privateKeyField, { target: { value: '-----BEGIN KEY-----FAKE-----END KEY-----' } });
+    expect((privateKeyField as HTMLTextAreaElement).value).toBe('-----BEGIN KEY-----FAKE-----END KEY-----');
+  });
+
+  it('updates the health check endpoint field', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const endpointField = await screen.findByLabelText(/health check endpoint/i);
+    fireEvent.change(endpointField, { target: { value: '/status' } });
+    expect((endpointField as HTMLInputElement).value).toBe('/status');
+  });
+
+  it('updates health check interval and falls back to default on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const intervalField = await screen.findByLabelText(/health check interval/i);
+    fireEvent.change(intervalField, { target: { value: '120' } });
+    expect((intervalField as HTMLInputElement).value).toBe('120');
+    fireEvent.change(intervalField, { target: { value: '' } });
+    expect((intervalField as HTMLInputElement).value).toBe('300');
+  });
+
+  it('updates health check timeout and falls back to default on invalid input', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const timeoutField = await screen.findByLabelText(/health check timeout/i);
+    fireEvent.change(timeoutField, { target: { value: '45' } });
+    expect((timeoutField as HTMLInputElement).value).toBe('45');
+    fireEvent.change(timeoutField, { target: { value: '' } });
+    expect((timeoutField as HTMLInputElement).value).toBe('30');
+  });
+
+  it('updates expected value while validation type is status code', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const expectedValueField = await screen.findByLabelText(/^expected value$/i);
+    fireEvent.change(expectedValueField, { target: { value: '404' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('404');
+  });
+
+  it('switches validation type to JSON regex and resets then updates the expected value', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    const validationTypeSelect = await screen.findByLabelText(/^validation type$/i);
+
+    fireEvent.mouseDown(validationTypeSelect);
+    const jsonRegexOption = await screen.findByRole('option', { name: /json regex/i });
+    fireEvent.click(jsonRegexOption);
+
+    const expectedValueField = await screen.findByLabelText(/^expected value$/i);
+    await waitFor(() => {
+      expect((expectedValueField as HTMLInputElement).value).toBe('');
+    });
+
+    fireEvent.change(expectedValueField, { target: { value: '.*OK.*' } });
+    expect((expectedValueField as HTMLInputElement).value).toBe('.*OK.*');
+  });
+
+  it('changes the restart HTTP method in custom commands', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeField = await screen.findByLabelText(/^command type$/i);
+    fireEvent.mouseDown(commandTypeField);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const methodField = await screen.findByLabelText(/^method$/i);
+    fireEvent.mouseDown(methodField);
+    fireEvent.click(await screen.findByRole('option', { name: /^put$/i }));
+
+    await waitFor(() => {
+      expect(methodField).toHaveTextContent('PUT');
+    });
+  });
+
+  it('updates headers JSON in custom commands and ignores invalid JSON', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeField = await screen.findByLabelText(/^command type$/i);
+    fireEvent.mouseDown(commandTypeField);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const headersField = await screen.findByLabelText(/headers \(optional\)/i);
+    expect((headersField as HTMLTextAreaElement).value).toBe('{}');
+
+    fireEvent.change(headersField, { target: { value: '{"Authorization":"token"}' } });
+    expect((headersField as HTMLTextAreaElement).value).toBe('{"Authorization":"token"}');
+
+    // Invalid JSON should be ignored, keeping the previous valid value
+    fireEvent.change(headersField, { target: { value: '{not valid json' } });
+    expect((headersField as HTMLTextAreaElement).value).toBe('{"Authorization":"token"}');
+  });
+
+  it('updates body JSON in custom commands and ignores invalid JSON', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/custom commands \(optional\)/i));
+
+    const commandTypeField = await screen.findByLabelText(/^command type$/i);
+    fireEvent.mouseDown(commandTypeField);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const bodyField = await screen.findByLabelText(/body \(optional\)/i);
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{}');
+
+    fireEvent.change(bodyField, { target: { value: '{"action":"restart"}' } });
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{"action":"restart"}');
+
+    // Invalid JSON should be ignored, keeping the previous valid value
+    fireEvent.change(bodyField, { target: { value: '{still not valid' } });
+    expect((bodyField as HTMLTextAreaElement).value).toBe('{"action":"restart"}');
+  });
+
+  it('updates the JSONPath response field in upgrade configuration', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/upgrade configuration \(optional\)/i));
+
+    const upgradeSwitch = await screen.findByLabelText(/enable version upgrades/i);
+    fireEvent.click(upgradeSwitch);
+
+    const jsonPathField = await screen.findByLabelText(/jsonpath response/i);
+    fireEvent.change(jsonPathField, { target: { value: '$.data.releases[*]' } });
+    expect((jsonPathField as HTMLInputElement).value).toBe('$.data.releases[*]');
+  });
+
+  it('switches upgrade command type to HTTP and updates the URL and method', async () => {
+    const store = createTestStore();
+    store.dispatch(setEnvironmentEditDialogOpen(true));
+    render(<EditEnvironmentDialog environment={mockEnvironment} />, { store });
+    fireEvent.click(await screen.findByText(/upgrade configuration \(optional\)/i));
+
+    const upgradeSwitch = await screen.findByLabelText(/enable version upgrades/i);
+    fireEvent.click(upgradeSwitch);
+
+    const upgradeTypeField = await screen.findByLabelText(/^upgrade command type$/i);
+    fireEvent.mouseDown(upgradeTypeField);
+    fireEvent.click(await screen.findByRole('option', { name: /^http$/i }));
+
+    const urlField = await screen.findByLabelText(/^url$/i);
+    fireEvent.change(urlField, { target: { value: 'http://myserver/upgrade/{VERSION}' } });
+    expect((urlField as HTMLInputElement).value).toBe('http://myserver/upgrade/{VERSION}');
+
+    const methodField = await screen.findByLabelText(/^method$/i);
+    fireEvent.mouseDown(methodField);
+    fireEvent.click(await screen.findByRole('option', { name: /^delete$/i }));
+
+    await waitFor(() => {
+      expect(methodField).toHaveTextContent('DELETE');
+    });
+  });
 });
