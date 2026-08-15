@@ -53,6 +53,35 @@ func TestUser_UpdatePassword_Succeeds(t *testing.T) {
 	assert.True(t, user.CheckPassword("newpass"))
 }
 
+func TestNewUser_PasswordTooLong(t *testing.T) {
+	// bcrypt rejects passwords over 72 bytes, exercising NewUser's error path.
+	tooLong := make([]byte, 73)
+	for i := range tooLong {
+		tooLong[i] = 'a'
+	}
+
+	user, err := NewUser("testuser", string(tooLong))
+	assert.Error(t, err)
+	assert.Nil(t, user)
+}
+
+func TestUser_UpdatePassword_TooLong(t *testing.T) {
+	user, err := NewUser("testuser", "password123")
+	assert.NoError(t, err)
+	oldHash := user.PasswordHash
+
+	tooLong := make([]byte, 73)
+	for i := range tooLong {
+		tooLong[i] = 'b'
+	}
+
+	err = user.UpdatePassword(string(tooLong))
+	assert.Error(t, err)
+	// Password hash and CheckPassword behaviour must be unaffected by the failed update.
+	assert.Equal(t, oldHash, user.PasswordHash)
+	assert.True(t, user.CheckPassword("password123"))
+}
+
 func TestUser_Permissions(t *testing.T) {
 	tests := []struct {
 		name               string
