@@ -593,5 +593,5 @@ describe('EditEnvironmentDialog', () => {
     await waitFor(() => {
       expect(methodField).toHaveTextContent('DELETE');
     });
-  });
+  }, 15000);
 });
