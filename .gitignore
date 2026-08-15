@@ -46,6 +46,7 @@ node_modules/
 .pnp.js
 
 # Testing and coverage
+.codekeep/
 coverage/
 *.lcov
 .nyc_output
