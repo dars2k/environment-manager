@@ -156,7 +156,7 @@ func TestTransaction_CommitTransactionFails(t *testing.T) {
 		}
 
 		mt.AddMockResponses(
-			mtest.CreateSuccessResponse(bson.E{Key: "n", Value: 1}, bson.E{Key: "ok", Value: 1}), // the insert below
+			mtest.CreateSuccessResponse(bson.E{Key: "n", Value: 1}, bson.E{Key: "ok", Value: 1}),                 // the insert below
 			mtest.CreateCommandErrorResponse(mtest.CommandError{Code: 50, Message: "commit rejected by server"}), // commitTransaction
 		)
 
