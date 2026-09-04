@@ -10,6 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/integration/mtest"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -141,6 +142,32 @@ func TestTransaction_StartSessionFails(t *testing.T) {
 	// StartSession on a disconnected client may or may not return an error depending
 	// on the driver version. We just verify no panic either way.
 	_ = txErr
+}
+
+// TestTransaction_CommitTransactionFails covers the CommitTransaction error path
+// (mongodb.go lines 148-150): fn succeeds, but the server rejects the commit.
+func TestTransaction_CommitTransactionFails(t *testing.T) {
+	mt := mtest.New(t, mtest.NewOptions().ClientType(mtest.Mock))
+
+	mt.Run("commit transaction fails", func(mt *mtest.T) {
+		db := &MongoDB{
+			client:   mt.Client,
+			database: mt.DB,
+		}
+
+		mt.AddMockResponses(
+			mtest.CreateSuccessResponse(bson.E{Key: "n", Value: 1}, bson.E{Key: "ok", Value: 1}),                 // the insert below
+			mtest.CreateCommandErrorResponse(mtest.CommandError{Code: 50, Message: "commit rejected by server"}), // commitTransaction
+		)
+
+		err := db.Transaction(context.Background(), func(sc mongo.SessionContext) error {
+			_, insertErr := db.Collection("probe").InsertOne(sc, bson.M{"x": 1})
+			return insertErr
+		})
+
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to commit transaction")
+	})
 }
 
 // TestNewMongoDB_StructFields verifies the struct is correctly populated using
