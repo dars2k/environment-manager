@@ -67,18 +67,25 @@ func (rl *RateLimiter) cleanup() {
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
 	for range ticker.C {
-		now := time.Now()
-		rl.entries.Range(func(k, v interface{}) bool {
-			e := v.(*rateLimitEntry)
-			e.mu.Lock()
-			stale := now.Sub(e.windowStart) > rl.window*2
-			e.mu.Unlock()
-			if stale {
-				rl.entries.Delete(k)
-			}
-			return true
-		})
+		rl.cleanupOnce()
 	}
+}
+
+// cleanupOnce performs a single stale-entry sweep, factored out of cleanup's
+// ticker loop so it can be exercised directly in tests without waiting on
+// the real 5-minute interval.
+func (rl *RateLimiter) cleanupOnce() {
+	now := time.Now()
+	rl.entries.Range(func(k, v interface{}) bool {
+		e := v.(*rateLimitEntry)
+		e.mu.Lock()
+		stale := now.Sub(e.windowStart) > rl.window*2
+		e.mu.Unlock()
+		if stale {
+			rl.entries.Delete(k)
+		}
+		return true
+	})
 }
 
 // RateLimitMiddleware wraps a handler with IP-based rate limiting.
