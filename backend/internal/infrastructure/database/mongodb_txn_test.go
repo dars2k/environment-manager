@@ -114,34 +114,22 @@ func TestTransaction_AbortPath_Mtest(t *testing.T) {
 	})
 }
 
-// TestTransaction_StartSessionFails exercises the StartSession error return path.
-// By disconnecting the client before calling Transaction, StartSession will fail
-// and return a "client is disconnected" error, covering lines 131-133 of mongodb.go.
+// TestTransaction_StartSessionFails exercises the StartSession error return path
+// (mongodb.go lines 131-133). A zero-value mongo.Client has a nil session pool,
+// so StartSession deterministically returns mongo.ErrClientDisconnected without
+// needing any network access or mock server.
 func TestTransaction_StartSessionFails(t *testing.T) {
-	ctx := context.Background()
+	db := &MongoDB{client: &mongo.Client{}}
 
-	// Connect to a non-existent host and then disconnect. After disconnect,
-	// StartSession should return an error.
-	clientOpts := options.Client().
-		ApplyURI("mongodb://127.0.0.1:27099").
-		SetServerSelectionTimeout(50 * time.Millisecond)
-	client, err := mongo.Connect(ctx, clientOpts)
-	require.NoError(t, err)
-
-	// Disconnect so the client is in a "disconnected" state.
-	_ = client.Disconnect(ctx)
-
-	db := &MongoDB{
-		client:   client,
-		database: client.Database("testdb"),
-	}
-
-	txErr := db.Transaction(ctx, func(sc mongo.SessionContext) error {
+	fnCalled := false
+	txErr := db.Transaction(context.Background(), func(sc mongo.SessionContext) error {
+		fnCalled = true
 		return nil
 	})
-	// StartSession on a disconnected client may or may not return an error depending
-	// on the driver version. We just verify no panic either way.
-	_ = txErr
+
+	require.Error(t, txErr)
+	assert.Contains(t, txErr.Error(), "failed to start session")
+	assert.False(t, fnCalled, "fn must not run when the session could not be started")
 }
 
 // TestTransaction_CommitTransactionFails covers the CommitTransaction error path
